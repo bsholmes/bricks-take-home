@@ -37,12 +37,6 @@ const CAMERA = new Camera(
 );
 
 export default () => {
-  const [indexCount, setIndexCount] = useState(0);
-  const [mouseDown, _setMouseDown] = useState(false);
-  const [mouseDownPos, _setMouseDownPos] = useState([]);
-
-  //TODO: array of transforms for icons
-
   const [glProgram, setGLProgram] = useState(null);
   const [icons, _setIcons] = useState([]);
 
@@ -52,82 +46,85 @@ export default () => {
     _setIcons(icons);
   };
 
-  const mouseDownRef = useRef(mouseDown);
-  const setMouseDown = down => {
-    mouseDownRef.current = down;
-    _setMouseDown(down);
-  };
-
-  const mouseDownPosRef = useRef(mouseDownPos);
-  const setMouseDownPos = pos => {
-    mouseDownPosRef.current = pos;
-    _setMouseDownPos(pos);
-  };
-
   const mouseDownHandler = (event) => {
     event.preventDefault();
 
-    if (icons && icons.length) {
-      for (let i = 0; i < icons.length; ++i) {
-        icons[i].onMouseDown(event);
+    const worldMousePos = projectMouseCoordsToWorldSpace(
+      [event.pageX - event.target.offsetLeft, event.pageY - event.target.offsetTop],
+      CANVAS_SIZE,
+      CAMERA,
+      2,
+    );
+    event.worldMousePos = worldMousePos;
+
+    if (iconsRef.current && iconsRef.current.length) {
+      for (let i = 0; i < iconsRef.current.length; ++i) {
+        iconsRef.current[i].onMouseDown(event);
       }
     }
-
-    setMouseDown(true);
-    setMouseDownPos([event.clientX, event.clientY]);
   };
 
   const mouseUpHandler = (event) => {
-    event.canvasSize = CANVAS_SIZE;
-    event.camera = CAMERA;
-    event.zDepth = 2;
+    const worldMousePos = projectMouseCoordsToWorldSpace(
+      [event.pageX - event.target.offsetLeft, event.pageY - event.target.offsetTop],
+      CANVAS_SIZE,
+      CAMERA,
+      2,
+    );
+    event.worldMousePos = worldMousePos;
 
     if (iconsRef.current && iconsRef.current.length) {
       for (let i = 0; i < iconsRef.current.length; ++i) {
         iconsRef.current[i].onMouseUp(event);
       }
     }
-    setMouseDown(false);
   };
 
   const mouseOutHandler = (event) => {
-    if (icons && icons.length) {
-      for (let i = 0; i < icons.length; ++i) {
-        icons[i].onMouseOut(event);
-      }
-    }
+    const worldMousePos = projectMouseCoordsToWorldSpace(
+      [event.pageX - event.target.offsetLeft, event.pageY - event.target.offsetTop],
+      CANVAS_SIZE,
+      CAMERA,
+      2,
+    );
+    event.worldMousePos = worldMousePos;
 
-    if (mouseDownRef.current) {
-      setMouseDown(false);
+    if (iconsRef.current && iconsRef.current.length) {
+      for (let i = 0; i < iconsRef.current.length; ++i) {
+        iconsRef.current[i].onMouseOut(event);
+      }
     }
   };
 
   const mouseOverHandler = (event) => {
-    if (icons && icons.length) {
-      for (let i = 0; i < icons.length; ++i) {
-        icons[i].onMouseOver(event);
-      }
-    }
+    const worldMousePos = projectMouseCoordsToWorldSpace(
+      [event.pageX - event.target.offsetLeft, event.pageY - event.target.offsetTop],
+      CANVAS_SIZE,
+      CAMERA,
+      2,
+    );
+    event.worldMousePos = worldMousePos;
 
-    if (event.buttons === 1 && event.button === 0) {
-      setMouseDown(true);
-      setMouseDownPos([event.clientX, event.clientY]);
+    if (iconsRef.current && iconsRef.current.length) {
+      for (let i = 0; i < iconsRef.current.length; ++i) {
+        iconsRef.current[i].onMouseOver(event);
+      }
     }
   };
 
   const mouseMoveHandler = (event) => {
-    if (icons && icons.length) {
-      for (let i = 0; i < icons.length; ++i) {
-        icons[i].onMouseMove(event);
+    const worldMousePos = projectMouseCoordsToWorldSpace(
+      [event.pageX - event.target.offsetLeft, event.pageY - event.target.offsetTop],
+      CANVAS_SIZE,
+      CAMERA,
+      2,
+    );
+    event.worldMousePos = worldMousePos;
+
+    if (iconsRef.current && iconsRef.current.length) {
+      for (let i = 0; i < iconsRef.current.length; ++i) {
+        iconsRef.current[i].onMouseMove(event);
       }
-    }
-
-    if (mouseDownRef.current) {
-
-      const dMouse = [
-        event.clientX - mouseDownPosRef.current[0],
-        event.clientY - mouseDownPosRef.current[1]
-      ];  
     }
   };
 
@@ -161,32 +158,26 @@ export default () => {
     CAMERA.aspect = gl.canvas.width / gl.canvas.height;
 
     // set uniforms, attributes, etc.
-    const mvpUniform = gl.getUniformLocation(program, 'uMVP');
+    const vpUniform = gl.getUniformLocation(program, 'uVPMatrix');
     gl.uniformMatrix4fv(
-      mvpUniform,
+      vpUniform,
       false,
       new Float32Array(
         mat4Mult(
-          IdentityMatrix(),
-          mat4Mult(
-            ViewMatrix(CAMERA.position, CAMERA.target, CAMERA.upDir),
-            ProjectionMatrix(CAMERA.fov, CAMERA.aspect, CAMERA.nearDist, CAMERA.farDist)
-          )
+          ViewMatrix(CAMERA.position, CAMERA.target, CAMERA.upDir),
+          ProjectionMatrix(CAMERA.fov, CAMERA.aspect, CAMERA.nearDist, CAMERA.farDist)
         )
       )
     );
-
 
     // load model
     const { vertData, indices } = PlaneModel(1, 1, [1, 1, 0]);
 
     setIcons([
-      new Icon(vertData, indices, icon, TranslationMatrix([0, 0, 2]), [[-0.5, 0.5], [-0.5, 0.5]])
+      new Icon(vertData, indices, icon, TranslationMatrix([0, 0, 2]), [[-1, 1], [-1, 1]])
     ]);
 
     LoadGeometry(gl, program, vertData, indices, 4, 2);
-
-    setIndexCount(indices.length);
 
     // load texture
     LoadTexture(gl, program, icon, 0);
@@ -202,7 +193,6 @@ export default () => {
     <Container>
       <RoundedCorners>
         <Canvas draw={draw} options={{ contextType: 'webgl', init }} width={CANVAS_SIZE[0]} height={CANVAS_SIZE[1]} />
-        {/* <img src={icon} width={150} heighht={150} /> */}
       </RoundedCorners>
     </Container>
   );
@@ -214,6 +204,7 @@ const Container = styled.div`
 `;
 
 const RoundedCorners = styled.div`
+  border: 1px solid #CCCCCC;
   border-radius: 18px;
   overflow: hidden;
   display: inline-block;

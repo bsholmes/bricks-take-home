@@ -1,16 +1,15 @@
 import {
   LoadTexture,
   LoadGeometry,
-  projectMouseCoordsToWorldSpace
 } from '../components/common/utils';
 import {
-  IdentityMatrix,
   mat4Mult,
   ProjectionMatrix,
   TranslationMatrix,
   RotationMatrix,
   ViewMatrix,
-  getTranslation
+  getTranslation,
+  vec4Add
 } from '../components/common/vectorMath';
 
 export default class Icon {
@@ -19,6 +18,9 @@ export default class Icon {
   transformMatrix;
   texture;
   extents; // [[xMin, xMax], [yMin, yMax]]
+
+  clicked = false;
+  clickOffset = [0, 0, 0];
 
   constructor(geometry, indices, texture, transformMatrix, extents) {
     this.geometry = geometry;
@@ -30,7 +32,7 @@ export default class Icon {
     this.extents = extents; 
   }
 
-  draw = (gl, program) => {
+  draw = (gl, program, camera) => {
     // TODO: enable batch rendering for instances with the same geo and texture
 
     // load geo
@@ -39,20 +41,12 @@ export default class Icon {
     // load texture
     LoadTexture(gl, program, this.texture, 0);
 
-    // console.log(this.transformMatrix);
-
-    const mvpUniform = gl.getUniformLocation(program, 'uMVP');
+    const modelMatrixUniform = gl.getUniformLocation(program, 'uModelMatrix');
     gl.uniformMatrix4fv(
-      mvpUniform,
+      modelMatrixUniform,
       false,
       new Float32Array(
-        mat4Mult(
-          this.transformMatrix,
-          mat4Mult(
-            ViewMatrix([0, 0, -1, 0], [0, 0, 1, 0], [0, 1, 0, 0]),
-            ProjectionMatrix(90, gl.canvas.width / gl.canvas.height, 0.00000001, 1000)
-          )
-        )
+        this.transformMatrix,
       )
     );
 
@@ -64,7 +58,9 @@ export default class Icon {
   }
 
   onMouseMove = (event) => {
-    
+    if (this.clicked) {
+      this.transformMatrix = TranslationMatrix(vec4Add(event.worldMousePos, this.clickOffset));
+    }
   }
 
   onMouseOut = (event) => {
@@ -72,21 +68,19 @@ export default class Icon {
   }
 
   onMouseDown = (event) => {
-    
+    if (this.isMouseWithinBounds(event.worldMousePos)) {
+      this.clicked = true;
+      let worldPos = getTranslation(this.transformMatrix);
+      this.clickOffset = [
+        worldPos[0] - event.worldMousePos[0],
+        worldPos[1] - event.worldMousePos[1],
+        0
+      ];
+    }
   }
 
   onMouseUp = (event) => {
-    
-    let worldMousePos = projectMouseCoordsToWorldSpace(
-      [event.pageX - event.target.offsetLeft, event.pageY - event.target.offsetTop],
-      event.canvasSize,
-      event.camera,
-      event.zDepth,
-    );
-
-    console.log("Set to " + worldMousePos);
-
-    this.transformMatrix = TranslationMatrix(worldMousePos);
+    this.clicked = false;
   }
 
   isMouseWithinBounds = (worldMousePos) => {
