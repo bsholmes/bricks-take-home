@@ -1,13 +1,16 @@
 import {
   LoadTexture,
-  LoadGeometry
+  LoadGeometry,
+  projectMouseCoordsToWorldSpace
 } from '../components/common/utils';
 import {
   IdentityMatrix,
   mat4Mult,
   ProjectionMatrix,
+  TranslationMatrix,
   RotationMatrix,
-  ViewMatrix
+  ViewMatrix,
+  getTranslation
 } from '../components/common/vectorMath';
 
 export default class Icon {
@@ -15,12 +18,16 @@ export default class Icon {
   indices;
   transformMatrix;
   texture;
+  extents; // [[xMin, xMax], [yMin, yMax]]
 
-  constructor(geometry, indices, texture, transformMatrix) {
+  constructor(geometry, indices, texture, transformMatrix, extents) {
     this.geometry = geometry;
     this.indices = indices;
     this.texture = texture;
     this.transformMatrix = transformMatrix;
+    // we could calculate the AABB from the geometry but it's faster just to set it
+    // since we should already know it from mesh generation
+    this.extents = extents; 
   }
 
   draw = (gl, program) => {
@@ -31,6 +38,8 @@ export default class Icon {
 
     // load texture
     LoadTexture(gl, program, this.texture, 0);
+
+    // console.log(this.transformMatrix);
 
     const mvpUniform = gl.getUniformLocation(program, 'uMVP');
     gl.uniformMatrix4fv(
@@ -47,7 +56,7 @@ export default class Icon {
       )
     );
 
-    gl.drawElements(gl.LINE_STRIP, this.indices.length, gl.UNSIGNED_SHORT, 0);
+    gl.drawElements(gl.TRIANGLE_STRIP, this.indices.length, gl.UNSIGNED_SHORT, 0);
   }
 
   onMouseOver = (event) => {
@@ -68,9 +77,32 @@ export default class Icon {
 
   onMouseUp = (event) => {
     
+    let worldMousePos = projectMouseCoordsToWorldSpace(
+      [event.pageX - event.target.offsetLeft, event.pageY - event.target.offsetTop],
+      event.canvasSize,
+      event.camera,
+      event.zDepth,
+    );
+
+    console.log("Set to " + worldMousePos);
+
+    this.transformMatrix = TranslationMatrix(worldMousePos);
   }
 
   isMouseWithinBounds = (worldMousePos) => {
+    // get our position from transformMatrix
+    let worldPos = getTranslation(this.transformMatrix);
 
+    const xMin = worldPos[0] + this.extents[0][0];
+    const xMax = worldPos[0] + this.extents[0][1];
+    const yMin = worldPos[1] + this.extents[1][0];
+    const yMax = worldPos[1] + this.extents[1][1];
+
+    return (
+      worldMousePos[0] >= xMin &&
+      worldMousePos[0] <= xMax &&
+      worldMousePos[1] >= yMin &&
+      worldMousePos[1] <= yMax
+    );
   }
 };

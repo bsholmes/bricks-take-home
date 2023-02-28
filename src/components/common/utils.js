@@ -2,7 +2,14 @@ import {
   TEXTURE_SLOTS,
   FLOAT_BYTE_SIZE
 } from './constants';
-import { DEG_TO_RAD } from './vectorMath';
+import {
+  DEG_TO_RAD,
+  vec4Add,
+  vec4Mult,
+  vec4Normalize,
+  vec4Scale,
+  vec4Sub
+} from './vectorMath';
 
 export const isPowerOfTwo = (x) => {
   return (Math.log(x) / Math.log(2)) % 1 === 0;
@@ -129,4 +136,25 @@ export const getViewWidthHeightAtZ = (fovY, aspect, zPos) => {
   let width = height * aspect;
 
   return { height, width };
+};
+
+export const projectMouseCoordsToWorldSpace = (mouseCoords, canvasSize, camera, zPos) => {
+  // normalize to view-space coordinates, from center, inverting y
+  const viewCoords = [
+    -0.5 + (mouseCoords[0] / canvasSize[0]),
+    0.5 - (mouseCoords[1] / canvasSize[1]),
+    1
+  ];
+
+  const distance = zPos - camera.position[2];
+
+  // calculate the plane width and height at the distance of the zPos
+  // const center = vec4Scale(vec4Sub(camera.position, camera.getForwardDir()), distance);
+  const height = 2 * Math.tan((camera.fov * DEG_TO_RAD) / 2) * distance;
+  const width = height * camera.aspect;
+
+  // multiply by the viewCoords
+  const worldPos = vec4Add(camera.position, vec4Mult([width, height, distance], viewCoords));
+
+  return worldPos;
 };

@@ -56,6 +56,17 @@ export const vec4Scale = (leftVec4, rightScalar) => {
   return tempVec;
 };
 
+// memberwise multiply
+export const vec4Mult = (leftVec4, rightVec4) => {
+  const tempVec = [];
+
+  for (let i = 0; i < 4; ++i) {
+    tempVec[i] = leftVec4[i] * rightVec4[i];
+  }
+
+  return tempVec;
+};
+
 export const vec4Magnitude = (vec4) => {
   return Math.sqrt(vec4Dot(vec4, vec4));
 };
@@ -207,3 +218,11 @@ export const TranslationMatrix = (translateVec) => {
     translateVec[0], translateVec[1], translateVec[2], 1
   ]);
 };
+
+export const getTranslation = (transformMat) => {
+  return [
+    transformMat[12],
+    transformMat[13],
+    transformMat[14]
+  ];
+}

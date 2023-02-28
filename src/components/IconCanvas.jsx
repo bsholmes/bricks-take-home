@@ -1,7 +1,6 @@
 import {
   useState,
-  useRef,
-  Fragment
+  useRef
 } from 'react';
 import styled from 'styled-components';
 
@@ -9,20 +8,33 @@ import Canvas from './common/Canvas';
 import {
   CreateAndLinkProgramWithShaders,
   LoadTexture,
-  LoadGeometry
+  LoadGeometry,
+  projectMouseCoordsToWorldSpace
 } from './common/utils';
 import { PlaneModel } from './common/proceduralMeshes';
 import {
   IdentityMatrix,
   mat4Mult,
   ProjectionMatrix,
-  RotationMatrix,
+  TranslationMatrix,
   ViewMatrix
 } from './common/vectorMath';
+import Camera from '../gl/Camera';
 import unlitVertexShader from '../shaders/unlitVertexShader.glsl';
 import unlitFragmentShader from '../shaders/unlitFragmentShader.glsl';
 import icon from '../static/circuit_icon.svg';
 import Icon from '../gl/Icon';
+
+const CANVAS_SIZE = [1600, 900];
+const CAMERA = new Camera(
+  [0, 0, -1, 0],
+  [0, 0, 1, 0],
+  [0, 1, 0, 0],
+  0.00000001,
+  1000,
+  90,
+  CANVAS_SIZE[0] / CANVAS_SIZE[1],
+);
 
 export default () => {
   const [indexCount, setIndexCount] = useState(0);
@@ -32,7 +44,13 @@ export default () => {
   //TODO: array of transforms for icons
 
   const [glProgram, setGLProgram] = useState(null);
-  const [icons, setIcons] = useState([]);
+  const [icons, _setIcons] = useState([]);
+
+  const iconsRef = useRef(icons);
+  const setIcons = icons => {
+    iconsRef.current = icons;
+    _setIcons(icons);
+  };
 
   const mouseDownRef = useRef(mouseDown);
   const setMouseDown = down => {
@@ -60,9 +78,13 @@ export default () => {
   };
 
   const mouseUpHandler = (event) => {
-    if (icons && icons.length) {
-      for (let i = 0; i < icons.length; ++i) {
-        icons[i].onMouseUp(event);
+    event.canvasSize = CANVAS_SIZE;
+    event.camera = CAMERA;
+    event.zDepth = 2;
+
+    if (iconsRef.current && iconsRef.current.length) {
+      for (let i = 0; i < iconsRef.current.length; ++i) {
+        iconsRef.current[i].onMouseUp(event);
       }
     }
     setMouseDown(false);
@@ -136,6 +158,8 @@ export default () => {
     gl.useProgram(program);
     setGLProgram(program);
 
+    CAMERA.aspect = gl.canvas.width / gl.canvas.height;
+
     // set uniforms, attributes, etc.
     const mvpUniform = gl.getUniformLocation(program, 'uMVP');
     gl.uniformMatrix4fv(
@@ -145,8 +169,8 @@ export default () => {
         mat4Mult(
           IdentityMatrix(),
           mat4Mult(
-            ViewMatrix([0, 0, -1, 0], [0, 0, 1, 0], [0, 1, 0, 0]),
-            ProjectionMatrix(90, gl.canvas.width / gl.canvas.height, 0.00000001, 1000)
+            ViewMatrix(CAMERA.position, CAMERA.target, CAMERA.upDir),
+            ProjectionMatrix(CAMERA.fov, CAMERA.aspect, CAMERA.nearDist, CAMERA.farDist)
           )
         )
       )
@@ -154,10 +178,10 @@ export default () => {
 
 
     // load model
-    const { vertData, indices } = PlaneModel(2, 2, [1, 1, 2]);
+    const { vertData, indices } = PlaneModel(1, 1, [1, 1, 0]);
 
     setIcons([
-      new Icon(vertData, indices, icon, IdentityMatrix())
+      new Icon(vertData, indices, icon, TranslationMatrix([0, 0, 2]), [[-0.5, 0.5], [-0.5, 0.5]])
     ]);
 
     LoadGeometry(gl, program, vertData, indices, 4, 2);
@@ -177,7 +201,7 @@ export default () => {
   return (
     <Container>
       <RoundedCorners>
-        <Canvas draw={draw} options={{ contextType: 'webgl', init }} width={1600} height={900} />
+        <Canvas draw={draw} options={{ contextType: 'webgl', init }} width={CANVAS_SIZE[0]} height={CANVAS_SIZE[1]} />
         {/* <img src={icon} width={150} heighht={150} /> */}
       </RoundedCorners>
     </Container>
