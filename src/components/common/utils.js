@@ -5,10 +5,7 @@ import {
 import {
   DEG_TO_RAD,
   vec4Add,
-  vec4Mult,
-  vec4Normalize,
-  vec4Scale,
-  vec4Sub
+  vec4Mult
 } from './vectorMath';
 
 export const isPowerOfTwo = (x) => {
@@ -51,12 +48,13 @@ export const CreateAndLinkProgramWithShaders = (glContext, vertShaderSource, fra
   return program;
 };
 
-export const LoadTexture = (gl, program, image, textureIndex = 0) => {
+export const CreateTexture = (gl, program, image, textureIndex = 0) => {
   // load texture
   // get width and height of image
   const img = new Image();
   img.src = image;
 
+  // TODO: THIS NEEDS TO BE SYNCHRONOUS, we can't wait for 
   img.onload = () => {
     const texture = gl.createTexture();
     const texWidth = img.width;
@@ -88,10 +86,17 @@ export const LoadTexture = (gl, program, image, textureIndex = 0) => {
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     }
 
-    const texUniformIndex = gl.getUniformLocation(program, 'uTex2d');
+    // const texUniformIndex = gl.getUniformLocation(program, 'uTex2d');
 
-    gl.uniform1i(texUniformIndex, textureIndex);
+    // gl.uniform1i(texUniformIndex, textureIndex);
   };
+};
+
+export const LoadTexture = (gl, program, textureIndex = 0) => {
+  // load texture
+  const texUniformIndex = gl.getUniformLocation(program, 'uTex2d');
+
+  gl.uniform1i(texUniformIndex, textureIndex);
 };
 
 // currently supports 4-component verts interlaced with 2-component UVs

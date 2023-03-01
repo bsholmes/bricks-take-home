@@ -7,23 +7,26 @@ import styled from 'styled-components';
 import Canvas from './common/Canvas';
 import {
   CreateAndLinkProgramWithShaders,
+  CreateTexture,
   LoadTexture,
   LoadGeometry,
   projectMouseCoordsToWorldSpace
 } from './common/utils';
 import { PlaneModel } from './common/proceduralMeshes';
 import {
-  IdentityMatrix,
   mat4Mult,
   ProjectionMatrix,
   TranslationMatrix,
   ViewMatrix
 } from './common/vectorMath';
 import Camera from '../gl/Camera';
+import DraggableIcon from '../gl/DraggableIcon';
+
 import unlitVertexShader from '../shaders/unlitVertexShader.glsl';
 import unlitFragmentShader from '../shaders/unlitFragmentShader.glsl';
 import icon from '../static/circuit_icon.svg';
-import Icon from '../gl/Icon';
+import DeleteIcon from '../static/delete_icon.svg';
+
 
 const CANVAS_SIZE = [1600, 900];
 const CAMERA = new Camera(
@@ -136,6 +139,9 @@ export default () => {
     gl.clearColor(0.95, 0.95, 0.95, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
     // draw icons
     if (icons && icons.length) {
       for (let i = 0; i < icons.length; ++i) {
@@ -173,8 +179,79 @@ export default () => {
     // load model
     const { vertData, indices } = PlaneModel(1, 1, [1, 1, 0]);
 
+    const removeIcon = (index) => {
+      const deleteIndex = iconsRef.current.findIndex(icon => icon.index === index);
+      if (deleteIndex === 0) {
+        setIcons(iconsRef.current.slice(1, iconsRef.current.length));
+      }
+      else {
+        setIcons([
+          ...iconsRef.current.slice(0, deleteIndex),
+          ...iconsRef.current.slice(deleteIndex + 1, iconsRef.current.length)
+        ]);
+      }
+    }
+
+    CreateTexture(gl, program, icon, 0);
+
+    CreateTexture(gl, program, DeleteIcon, 1);
+
     setIcons([
-      new Icon(vertData, indices, icon, TranslationMatrix([0, 0, 2]), [[-1, 1], [-1, 1]])
+      new DraggableIcon(
+        0,
+        vertData,
+        indices,
+        0,
+        1,
+        TranslationMatrix([0, 0, 2]),
+        [[-0.5, 0.5], [-0.5, 0.5]],
+        null,
+        removeIcon
+      ),
+      new DraggableIcon(
+        1,
+        vertData,
+        indices,
+        0,
+        1,
+        TranslationMatrix([1, 1, 2]),
+        [[-0.5, 0.5], [-0.5, 0.5]],
+        null,
+        removeIcon
+      ),
+      new DraggableIcon(
+        2,
+        vertData,
+        indices,
+        0,
+        1,
+        TranslationMatrix([2, 2, 2]),
+        [[-0.5, 0.5], [-0.5, 0.5]],
+        null,
+        removeIcon
+      ),
+      new DraggableIcon(
+        3,
+        vertData,
+        indices,
+        0,
+        1,
+        TranslationMatrix([-1, -1, 2]),
+        [[-0.5, 0.5], [-0.5, 0.5]],
+        null,
+        removeIcon
+      ),
+      new DraggableIcon(
+        4,
+        vertData,
+        indices,
+        0,
+        1,
+        TranslationMatrix([-2, -2, 2]),
+        [[-0.5, 0.5], [-0.5, 0.5]],
+        null,
+        removeIcon
+      )
     ]);
 
     LoadGeometry(gl, program, vertData, indices, 4, 2);

@@ -3,43 +3,53 @@ import {
   LoadGeometry,
 } from '../components/common/utils';
 import {
-  mat4Mult,
-  ProjectionMatrix,
   TranslationMatrix,
-  RotationMatrix,
-  ViewMatrix,
   getTranslation,
   vec4Add
 } from '../components/common/vectorMath';
 
 export default class Icon {
+  // used for deletion to prevent the need to search
+  index;
+
   geometry;
   indices;
   transformMatrix;
-  texture;
+  textureIndex;
+  secondaryTextureIndex;
   extents; // [[xMin, xMax], [yMin, yMax]]
 
   clicked = false;
-  clickOffset = [0, 0, 0];
+  onClick = () => {}
 
-  constructor(geometry, indices, texture, transformMatrix, extents) {
+  constructor(
+    index,
+    geometry,
+    indices,
+    textureIndex,
+    secondaryTextureIndex,
+    transformMatrix,
+    extents,
+    onClick = () => {}
+  ) {
+    this.index = index;
     this.geometry = geometry;
     this.indices = indices;
-    this.texture = texture;
+    this.textureIndex = textureIndex;
+    this.secondaryTextureIndex = secondaryTextureIndex;
     this.transformMatrix = transformMatrix;
     // we could calculate the AABB from the geometry but it's faster just to set it
     // since we should already know it from mesh generation
-    this.extents = extents; 
+    this.extents = extents;
+    this.onClick = onClick;
   }
 
-  draw = (gl, program, camera) => {
+  draw (gl, program) {
     // TODO: enable batch rendering for instances with the same geo and texture
+    LoadTexture(gl, program, this.textureIndex);
 
     // load geo
     LoadGeometry(gl, program, this.geometry, this.indices, 4, 2);
-
-    // load texture
-    LoadTexture(gl, program, this.texture, 0);
 
     const modelMatrixUniform = gl.getUniformLocation(program, 'uModelMatrix');
     gl.uniformMatrix4fv(
@@ -53,37 +63,36 @@ export default class Icon {
     gl.drawElements(gl.TRIANGLE_STRIP, this.indices.length, gl.UNSIGNED_SHORT, 0);
   }
 
-  onMouseOver = (event) => {
+  onMouseOver (event) {
 
   }
 
-  onMouseMove = (event) => {
-    if (this.clicked) {
+  onMouseMove (event) {
+    if (this.dragging) {
       this.transformMatrix = TranslationMatrix(vec4Add(event.worldMousePos, this.clickOffset));
     }
   }
 
-  onMouseOut = (event) => {
+  onMouseOut (event) {
     
   }
 
-  onMouseDown = (event) => {
+  onMouseDown (event) {
     if (this.isMouseWithinBounds(event.worldMousePos)) {
       this.clicked = true;
-      let worldPos = getTranslation(this.transformMatrix);
-      this.clickOffset = [
-        worldPos[0] - event.worldMousePos[0],
-        worldPos[1] - event.worldMousePos[1],
-        0
-      ];
+    }
+    else {
+      this.clicked = false;
     }
   }
 
-  onMouseUp = (event) => {
-    this.clicked = false;
+  onMouseUp (event) {
+    if (this.clicked && this.onClick) {
+      this.onClick();
+    }
   }
 
-  isMouseWithinBounds = (worldMousePos) => {
+  isMouseWithinBounds (worldMousePos) {
     // get our position from transformMatrix
     let worldPos = getTranslation(this.transformMatrix);
 
