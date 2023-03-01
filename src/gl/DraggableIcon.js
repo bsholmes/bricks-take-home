@@ -6,7 +6,7 @@ import {
 import Icon from './Icon';
 import { PlaneModel } from '../components/common/proceduralMeshes';
 
-const DELETE_ICON_OFFSET = [0.425, 0.425, 0];
+const DELETE_ICON_OFFSET = [0.42, 0.36, 0];
 
 export default class DraggableIcon extends Icon {
   clicked = false;
@@ -55,7 +55,7 @@ export default class DraggableIcon extends Icon {
   onMouseMove (event) {
     super.onMouseMove(event);
     if (this.dragging) {
-      this.transformMatrix = TranslationMatrix(vec4Add(event.worldMousePos, this.clickOffset));
+      this.moveTo(vec4Add(event.worldMousePos, this.clickOffset));
     }
   }
 
@@ -110,5 +110,11 @@ export default class DraggableIcon extends Icon {
     }
 
     this.dragging = false;
+  }
+
+  moveTo(position) {
+    // collision detection with other nodes and the edge of the canvas
+    // update connections
+    this.transformMatrix = TranslationMatrix(position);
   }
 }

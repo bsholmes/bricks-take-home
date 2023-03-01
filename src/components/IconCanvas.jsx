@@ -39,7 +39,7 @@ const CAMERA = new Camera(
   CANVAS_SIZE[0] / CANVAS_SIZE[1],
 );
 
-export default () => {
+const IconCanvas = () => {
   const [glProgram, setGLProgram] = useState(null);
   const [icons, _setIcons] = useState([]);
 
@@ -267,18 +267,13 @@ export default () => {
   };
 
   return (
-    <Container>
+    <div>
       <RoundedCorners>
         <Canvas draw={draw} options={{ contextType: 'webgl', init }} width={CANVAS_SIZE[0]} height={CANVAS_SIZE[1]} />
       </RoundedCorners>
-    </Container>
+    </div>
   );
 };
-
-const Container = styled.div`
-  width: 100%;
-  padding: 0 calc((100% - 1600px) / 2);
-`;
 
 const RoundedCorners = styled.div`
   border: 1px solid #CCCCCC;
@@ -287,3 +282,5 @@ const RoundedCorners = styled.div`
   display: inline-block;
   height: 900px;
 `;
+
+export default IconCanvas;
