@@ -54,7 +54,7 @@ export const CreateTexture = (gl, program, image, textureIndex = 0) => {
   const img = new Image();
   img.src = image;
 
-  // TODO: THIS NEEDS TO BE SYNCHRONOUS, we can't wait for 
+  // TODO: THIS NEEDS TO BE SYNCHRONOUS, we can't wait for
   img.onload = () => {
     const texture = gl.createTexture();
     const texWidth = img.width;
@@ -137,8 +137,8 @@ export const LoadGeometry = (gl, program, vertData, indices, vertComponentNum = 
 };
 
 export const getViewWidthHeightAtZ = (fovY, aspect, zPos) => {
-  let height = 2 * Math.tan(fovY * DEG_TO_RAD / 2) * zPos;
-  let width = height * aspect;
+  const height = 2 * Math.tan(fovY * DEG_TO_RAD / 2) * zPos;
+  const width = height * aspect;
 
   return { height, width };
 };

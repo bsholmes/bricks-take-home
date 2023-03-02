@@ -1,7 +1,6 @@
 import {
   useState,
-  useRef,
-  useEffect
+  useRef
 } from 'react';
 import styled from 'styled-components';
 
@@ -11,22 +10,18 @@ import {
   CreateTexture,
   projectMouseCoordsToWorldSpace
 } from '../utils/utils';
-import { PlaneModel } from '../utils/proceduralMeshes';
 import {
   mat4Mult,
   ProjectionMatrix,
-  TranslationMatrix,
   ViewMatrix
 } from '../utils/vectorMath';
 import Camera from '../gl/Camera';
-import DraggableIcon from '../gl/DraggableIcon';
 
 import unlitVertexShader from '../shaders/unlitVertexShader.glsl';
 import unlitFragmentShader from '../shaders/unlitFragmentShader.glsl';
 import CircuitIcon from '../static/circuit_icon.svg';
 import DeleteIcon from '../static/delete_icon.svg';
 import ConnectArrowIcon from '../static/connect_arrow_icon.svg';
-
 
 const CANVAS_SIZE = [1600, 900];
 const CAMERA = new Camera(
@@ -36,7 +31,7 @@ const CAMERA = new Camera(
   0.00000001,
   1000,
   90,
-  CANVAS_SIZE[0] / CANVAS_SIZE[1],
+  CANVAS_SIZE[0] / CANVAS_SIZE[1]
 );
 
 const IconCanvas = ({
@@ -54,24 +49,52 @@ const IconCanvas = ({
   const toolRef = useRef(tool);
   toolRef.current = tool;
 
+  const addIcon = (icon) => {
+    setIcons([...iconsRef.current, icon]);
+  };
+
+  const removeIcon = (index) => {
+    const deleteIndex = iconsRef.current.findIndex(icon => icon.index === index);
+    if (deleteIndex === 0) {
+      setIcons(iconsRef.current.slice(1, iconsRef.current.length));
+    } else {
+      setIcons([
+        ...iconsRef.current.slice(0, deleteIndex),
+        ...iconsRef.current.slice(deleteIndex + 1, iconsRef.current.length)
+      ]);
+    }
+  };
+
+  const addConnection = (connection) => {
+
+  };
+
+  const removeConnection = (connection) => {
+
+  };
+
   const modifyMouseEvent = (event) => {
     const worldMousePos = projectMouseCoordsToWorldSpace(
       [event.pageX - event.target.offsetLeft, event.pageY - event.target.offsetTop],
       CANVAS_SIZE,
       CAMERA,
-      2,
+      2
     );
-    event.worldMousePos = worldMousePos;
-    event.icons = [...iconsRef.current];
-    event.camera = CAMERA;
-    event.addIcon = (icon) => {
-      setIcons([...iconsRef.current, icon]);
+
+    event = {
+      ...event,
+
+      worldMousePos,
+      icons: [...iconsRef.current],
+      camera: CAMERA,
+      addIcon,
+      removeIcon,
+      addConnection,
+      removeConnection
     };
-    event.removeIcon = () => {};
-    event.addConnection = () => {};
-    event.removeConnection = () => {};
+
     return event;
-  }
+  };
 
   const mouseDownHandler = (event) => {
     event.preventDefault();
@@ -114,7 +137,6 @@ const IconCanvas = ({
     }
 
     // draw connections
-
   };
 
   const init = (gl) => {
@@ -137,22 +159,6 @@ const IconCanvas = ({
         )
       )
     );
-
-    // load model
-    const { vertData, indices } = PlaneModel(1, 1, [1, 1, 0]);
-
-    const removeIcon = (index) => {
-      const deleteIndex = iconsRef.current.findIndex(icon => icon.index === index);
-      if (deleteIndex === 0) {
-        setIcons(iconsRef.current.slice(1, iconsRef.current.length));
-      }
-      else {
-        setIcons([
-          ...iconsRef.current.slice(0, deleteIndex),
-          ...iconsRef.current.slice(deleteIndex + 1, iconsRef.current.length)
-        ]);
-      }
-    }
 
     CreateTexture(gl, program, CircuitIcon, 0);
 

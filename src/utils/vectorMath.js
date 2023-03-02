@@ -125,7 +125,7 @@ export const ViewMatrix = (camPos, targetPos, upDir) => {
     x[0], x[1], x[2], -camPos[0],
     y[0], y[1], y[2], -camPos[1],
     z[0], z[1], z[2], -camPos[2],
-    0,    0,    1,    1
+    0, 0, 1, 1
   ]);
 };
 
@@ -225,4 +225,4 @@ export const getTranslation = (transformMat) => {
     transformMat[13],
     transformMat[14]
   ];
-}
+};

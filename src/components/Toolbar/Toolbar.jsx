@@ -16,20 +16,19 @@ const Toolbar = ({
   toolMode,
   onToolChange = () => {}
 }) => {
-
   return (
     <Container>
       {IMAGE_MAP.map((image, index) => (
         <ToolbarButton
           key={index} // index is okay as a key here because our array is constant
           image={image}
-          onClick={() => {onToolChange(index);}}
+          onClick={() => { onToolChange(index); }}
           selected={toolMode === index}
-          />
+        />
       ))}
     </Container>
   );
-}
+};
 
 const Container = styled.div`
   display: flex;

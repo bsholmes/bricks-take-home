@@ -7,8 +7,12 @@ export default class AddTool {
   mouseDown = false;
   vertData;
   indices;
+  iconsPlaced = 0;
 
   constructor() {
+    // it's a little weird to keep the mesh data here since it should probably be handled by the icon itself
+    // but then each icon would have an instance of the same mesh data
+    // this way they all use the same instance of mesh data
     const { vertData, indices } = PlaneModel(1, 1, [1, 1, 0]);
     this.vertData = vertData;
     this.indices = indices;
@@ -18,7 +22,7 @@ export default class AddTool {
     this.mouseDown = true;
     
     this.placingIcon = new DraggableIcon(
-      0,
+      this.iconsPlaced,
       this.vertData,
       this.indices,
       0,
@@ -28,6 +32,8 @@ export default class AddTool {
       null,
       event.removeIcon
     );
+
+    this.iconsPlaced++;
 
     event.addIcon(this.placingIcon);
 

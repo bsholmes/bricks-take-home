@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import styled from 'styled-components';
 
-import IconCanvas from "./IconCanvas";
-import Toolbar from "./Toolbar/Toolbar";
+import IconCanvas from './IconCanvas';
+import Toolbar from './Toolbar/Toolbar';
 
 import SelectTool from '../tools/SelectTool';
 import AddTool from '../tools/AddTool';

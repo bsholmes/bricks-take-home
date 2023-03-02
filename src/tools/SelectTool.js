@@ -6,7 +6,7 @@ export default class SelectTool {
       }
     }
   }
-  
+
   onMouseUp (event) {
     if (event.icons && event.icons.length) {
       for (let i = 0; i < event.icons.length; ++i) {

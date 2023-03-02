@@ -1,11 +1,11 @@
 import styled from 'styled-components';
 
- const ToolbarButton = ({
+const ToolbarButton = ({
   image,
   selected,
-  onClick = () => {}  
+  onClick = () => {}
 }) => {
-  return <ButtonImage src={image} onClick={onClick} selected={selected} />
+  return <ButtonImage src={image} onClick={onClick} selected={selected} />;
 };
 
 const ButtonImage = styled.img`

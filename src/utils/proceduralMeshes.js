@@ -49,8 +49,8 @@ export const PlaneModel = (xSegments, ySegments, extents = [1, 1, 1]) => {
   let vertData = [];
   let indices = [];
 
-  let halfX = extents[0] / 2;
-  let halfY = extents[1] / 2;
+  const halfX = extents[0] / 2;
+  const halfY = extents[1] / 2;
 
   for (let i = 0; i <= ySegments; ++i) {
     for (let j = 0; j <= xSegments; ++j) {
@@ -66,11 +66,11 @@ export const PlaneModel = (xSegments, ySegments, extents = [1, 1, 1]) => {
     }
   }
 
-  let directions = [
+  const directions = [
     [0, 1],
     [1, 0],
     [0, -1],
-    [-1, 0],
+    [-1, 0]
   ];
 
   indices = [0];
@@ -92,24 +92,23 @@ export const PlaneModel = (xSegments, ySegments, extents = [1, 1, 1]) => {
         // horizontal
         // either start from zero and iterate up to segments
         // or start at segments and iterate down to zero
-        let posDirColumns = (_columns % 2) === 0 ? _columns / 2 : Math.floor(_columns / 2) + (_columns % 2);
-        let negDirColumns = _columns - posDirColumns;
+        const posDirColumns = (_columns % 2) === 0 ? _columns / 2 : Math.floor(_columns / 2) + (_columns % 2);
+        const negDirColumns = _columns - posDirColumns;
         const columnIndex = _columns % 2 !== 0 ? xSegments - (posDirColumns - 1) : negDirColumns;
 
         let j = 0;
         if (direction > 0) {
           for (j = _start[0]; j < Math.max(segments - negDirColumns, 0); j += direction) {
             _indices = [..._indices, j + (_start[1] - direction) * (xSegments + 1)];
-            _indices = [..._indices,  (j + direction) + _start[1] * (xSegments + 1)];
+            _indices = [..._indices, (j + direction) + _start[1] * (xSegments + 1)];
           }
           _indices = [..._indices, Math.max(segments - negDirColumns, 0) + (_start[1] - direction) * (xSegments + 1)];
-        }
-        else {
+        } else {
           for (j = _start[0]; j > Math.max(segments, posDirColumns); j += direction) {
             _indices = [..._indices, j + (_start[1] - direction) * (xSegments + 1)];
-            _indices = [..._indices,  (j + direction) + _start[1] * (xSegments + 1)];
+            _indices = [..._indices, (j + direction) + _start[1] * (xSegments + 1)];
           }
-          _indices = [..._indices, Math.max(segments, posDirColumns) + (_start[1] - direction) * (xSegments + 1)]; 
+          _indices = [..._indices, Math.max(segments, posDirColumns) + (_start[1] - direction) * (xSegments + 1)];
         }
         _rows++;
 
@@ -117,15 +116,14 @@ export const PlaneModel = (xSegments, ySegments, extents = [1, 1, 1]) => {
           return _indices;
         }
 
-        let posDirRows = (_rows % 2) === 0 ? _rows / 2 : Math.floor(_rows / 2) + (_rows % 2);
-        let negDirRows = _rows - posDirRows;
+        const posDirRows = (_rows % 2) === 0 ? _rows / 2 : Math.floor(_rows / 2) + (_rows % 2);
+        const negDirRows = _rows - posDirRows;
         const rowIndex = _rows % 2 !== 0 ? ySegments - posDirRows : negDirRows;
 
         _start = [columnIndex, rowIndex];
-      }
-      else {
+      } else {
         const direction = directions[i][1];
-        let posDirRows = (_rows % 2) === 0 ? _rows / 2 : Math.floor(_rows / 2) + (_rows % 2);
+        const posDirRows = (_rows % 2) === 0 ? _rows / 2 : Math.floor(_rows / 2) + (_rows % 2);
         let j = 0;
         // vertical
         if (direction > 0) {
@@ -134,9 +132,8 @@ export const PlaneModel = (xSegments, ySegments, extents = [1, 1, 1]) => {
             _indices = [..._indices, _start[0] + (j + direction) * (xSegments + 1)];
           }
           _indices = [..._indices, (_start[0] + direction) + (_start[1] + Math.max(segments - Math.max(_rows, 0))) * (xSegments + 1)];
-        }
-        else {
-          let negDirRows = _rows - posDirRows;
+        } else {
+          const negDirRows = _rows - posDirRows;
           for (j = _start[1]; j > Math.max(segments, negDirRows); j += direction) {
             _indices = [..._indices, (_start[0] + direction) + j * (xSegments + 1)];
             _indices = [..._indices, _start[0] + (j + direction) * (xSegments + 1)];
@@ -148,90 +145,26 @@ export const PlaneModel = (xSegments, ySegments, extents = [1, 1, 1]) => {
         if (_columns === xSegments || _rows === ySegments) {
           return _indices;
         }
-        let negDirRows = _rows - posDirRows;
+        const negDirRows = _rows - posDirRows;
         const rowIndex = _rows % 2 === 0 ? ySegments - posDirRows : negDirRows;
 
-        let posDirColumns = (_columns % 2) === 0 ? _columns / 2 : Math.floor(_columns / 2) + (_columns % 2);
-        let negDirColumns = _columns - posDirColumns;
+        const posDirColumns = (_columns % 2) === 0 ? _columns / 2 : Math.floor(_columns / 2) + (_columns % 2);
+        const negDirColumns = _columns - posDirColumns;
         const columnIndex = _columns % 2 !== 0 ? posDirColumns : xSegments - negDirColumns;
-        
+
         _start = [columnIndex, rowIndex];
       }
     }
 
     // only recurse if we haven't reached the last column/row
     if (_rows < ySegments || _columns < xSegments) {
-      //TODO: indices wrong in the second recursion
+      // TODO: indices wrong in the second recursion
       return recursivelySpiralIndices(_indices, _start, _columns, _rows);
     }
 
-    return _indices
+    return _indices;
   };
-  indices = recursivelySpiralIndices(indices, [0,0], 0, 0);
+  indices = recursivelySpiralIndices(indices, [0, 0], 0, 0);
 
   return { vertData, indices };
-};
-
-// generates a cube mesh at the origin
-export const CubeModel = (sideLength) => {
-  const halfLength = sideLength / 2;
-  const vertData = [
-    // front
-    halfLength, -halfLength, halfLength, 1, 1, 0,
-    halfLength, halfLength, halfLength, 1, 1, 1,
-    -halfLength, -halfLength, halfLength, 1, 0, 0,
-    -halfLength, halfLength, halfLength, 1, 0, 1,
-
-    // left
-    -halfLength, -halfLength, halfLength, 1, 1, 0,
-    -halfLength, halfLength, halfLength, 1, 1, 1,
-    -halfLength, -halfLength, -halfLength, 1, 0, 0,
-    -halfLength, halfLength, -halfLength, 1, 0, 1,
-
-    // back
-    -halfLength, -halfLength, -halfLength, 1, 1, 0,
-    -halfLength, halfLength, -halfLength, 1, 1, 1,
-    halfLength, -halfLength, -halfLength, 1, 0, 0,
-    halfLength, halfLength, -halfLength, 1, 0, 1,
-
-    // right
-    halfLength, -halfLength, -halfLength, 1, 0, 1,
-    halfLength, halfLength, -halfLength, 1, 1, 1,
-    halfLength, -halfLength, halfLength, 1, 0, 0,
-    halfLength, halfLength, halfLength, 1, 1, 0,
-
-    // top
-    halfLength, halfLength, -halfLength, 1, 1, 0,
-    -halfLength, halfLength, -halfLength, 1, 1, 1,
-    halfLength, halfLength, halfLength, 1, 0, 0,
-    -halfLength, halfLength, halfLength, 1, 0, 1,
-
-    // bottom
-    halfLength, -halfLength, halfLength, 1, 1, 1,
-    -halfLength, -halfLength, -halfLength, 1, 1, 0,
-    -halfLength, -halfLength, halfLength, 1, 0, 0,
-    halfLength, -halfLength, -halfLength, 1, 0, 1
-  ];
-  const indices = [
-    0, 1, 2, 3,
-    4, 5, 6, 7,
-    8, 9, 10, 11,
-    12, 13, 14, 15,
-    16, 17, 18, 19,
-    20, 21, 22, 23
-  ];
-
-  // TODO:
-  // front, half of left, bottom, back, right, top, second half of left
-  return { vertData, indices };
-};
-
-// generate a bevelled base for a model to sit on for the turntable
-export const TurntableBase = (sections, radius) => {
-  let vertData = [];
-  let indices = [];
-  
-  for (let i = 0; i < sections; ++i) {
-
-  }
 };
