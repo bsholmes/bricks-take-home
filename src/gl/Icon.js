@@ -3,11 +3,7 @@ import {
   LoadTexture,
   LoadGeometry,
 } from '../utils/utils';
-import {
-  TranslationMatrix,
-  getTranslation,
-  vec4Add
-} from '../utils/vectorMath';
+import { getTranslation } from '../utils/vectorMath';
 
 export default class Icon {
   // used for deletion to prevent the need to search
@@ -19,6 +15,7 @@ export default class Icon {
   textureIndex;
   secondaryTextureIndex;
   extents; // [[xMin, xMax], [yMin, yMax]]
+  colorMultiply = null;
 
   clicked = false;
   onClick = () => {};
@@ -29,6 +26,7 @@ export default class Icon {
     secondaryTextureIndex,
     transformMatrix,
     extents,
+    colorMultiply = null,
     onClick = () => {}
   ) {
     this.index = index;
@@ -40,6 +38,7 @@ export default class Icon {
     // we could calculate the AABB from the geometry but it's faster just to set it
     // since we should already know it from mesh generation
     this.extents = extents;
+    this.colorMultiply = colorMultiply;
     this.onClick = onClick;
   }
 
@@ -49,6 +48,14 @@ export default class Icon {
 
     // load geo
     LoadGeometry(gl, program, this.geometry, this.indices, 4, 2);
+
+    if (this.colorMultiply) {
+      const colorMultiplyUniform = gl.getUniformLocation(program, 'uColorMultiply');
+      gl.uniform4fv(
+        colorMultiplyUniform,
+        new Float32Array (this.colorMultiply)
+      );
+    }
 
     const modelMatrixUniform = gl.getUniformLocation(program, 'uModelMatrix');
     gl.uniformMatrix4fv(
@@ -60,20 +67,24 @@ export default class Icon {
     );
 
     gl.drawElements(gl.TRIANGLE_STRIP, this.indices.length, gl.UNSIGNED_SHORT, 0);
-  }
 
-  onMouseOver (event) {
-
-  }
-
-  onMouseMove (event) {
-    if (this.dragging) {
-      this.transformMatrix = TranslationMatrix(vec4Add(event.worldMousePos, this.clickOffset));
+    if (this.colorMultiply) {
+      // reset color
+      const colorMultiplyUniform = gl.getUniformLocation(program, 'uColorMultiply');
+      gl.uniform4fv(
+        colorMultiplyUniform,
+        new Float32Array ([1, 1, 1, 1])
+      );
     }
   }
 
+  onMouseOver (event) {
+  }
+
+  onMouseMove (event) {
+  }
+
   onMouseOut (event) {
-    
   }
 
   onMouseDown (event) {

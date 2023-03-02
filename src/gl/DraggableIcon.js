@@ -2,9 +2,10 @@ import {
   DEG_TO_RAD,
   TranslationMatrix,
   getTranslation,
-  vec4Add
+  vec4Add,
+  mat4Mult,
+  ScaleMatrix
 } from '../utils/vectorMath';
-import { PlaneModel } from '../utils/proceduralMeshes';
 
 import Icon from './Icon';
 
@@ -18,6 +19,7 @@ export default class DraggableIcon extends Icon {
   deleteIcon = null;
 
   onDelete = (index) => {};
+  onRemoveConnection = (index) => {};
 
   sideConnections = [
     null, // left
@@ -33,7 +35,8 @@ export default class DraggableIcon extends Icon {
     transformMatrix,
     extents,
     onClick = () => {},
-    onDelete = (index) => {}
+    onDelete = (index) => {},
+    onRemoveConnection = (index) => {}
   ) {
     super(
       index,
@@ -45,6 +48,7 @@ export default class DraggableIcon extends Icon {
     );
 
     this.onDelete = onDelete;
+    this.onRemoveConnection = onRemoveConnection;
   }
 
   draw (gl, program) {
@@ -53,7 +57,10 @@ export default class DraggableIcon extends Icon {
     if (this.clicked && this.deleteIcon) {
       // draw delete icon
       const position = getTranslation(this.transformMatrix);
-      this.deleteIcon.transformMatrix = TranslationMatrix(vec4Add(position, DELETE_ICON_OFFSET));
+      this.deleteIcon.transformMatrix = mat4Mult(
+        ScaleMatrix([0.15, 0.15, 1, 0]),
+        TranslationMatrix(vec4Add(position, DELETE_ICON_OFFSET))
+      );
       this.deleteIcon.draw(gl, program);
     }
   }
@@ -89,18 +96,26 @@ export default class DraggableIcon extends Icon {
       if (!this.deleteIcon) {
         const position = getTranslation(this.transformMatrix);
 
-        const { vertData, indices: deleteIndices } = PlaneModel(1, 1, [0.15, 0.15, 0]);
-
         this.deleteIcon = new Icon(
           -1,
-          vertData,
-          deleteIndices,
           this.secondaryTextureIndex,
           null,
-          TranslationMatrix(vec4Add(position, DELETE_ICON_OFFSET)),
+          mat4Mult(
+            ScaleMatrix([0.15, 0.15, 1, 0]),
+            TranslationMatrix(vec4Add(position, DELETE_ICON_OFFSET))
+          ),
           [[-0.075, 0.075], [-0.075, 0.075]],
+          null,
           () => {
             this.onDelete(this.index);
+
+            // remove connections
+            for (let i = 0; i < this.sideConnections.length; ++i) {
+              if (this.sideConnections[i]) {
+                this.onRemoveConnection(this.sideConnections[i].index);
+              }
+            }
+
             this.deleteIcon = null;
           }
         );
@@ -126,6 +141,7 @@ export default class DraggableIcon extends Icon {
     let adjustedPosition = [...position];
     // collision detection with other nodes and the edge of the canvas
     const collision = this.collisionDetection(position, nodes, camera);
+
     if (collision.hit) {
       adjustedPosition[0] += collision.overlap[0];
       adjustedPosition[1] += collision.overlap[1];
@@ -140,6 +156,10 @@ export default class DraggableIcon extends Icon {
     let maxOverlap = [0, 0, 0];
 
     for (let i = 0; i < nodes.length; ++i) {
+      if (nodes[i].index === this.index) {
+        continue;
+      }
+
       const bounds = this.getBoundsForPos(vec4Add(position, overlap));
       const otherBounds = nodes[i].getBounds();
 

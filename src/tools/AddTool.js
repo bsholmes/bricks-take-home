@@ -5,22 +5,20 @@ import DraggableIcon from '../gl/DraggableIcon';
 export default class AddTool {
   placingIcon = null;
   mouseDown = false;
-  iconsPlaced = 0;
 
   onMouseDown (event) {
     this.mouseDown = true;
     
     this.placingIcon = new DraggableIcon(
-      this.iconsPlaced,
+      event.iconsCreated,
       0,
       1,
       TranslationMatrix([...event.worldMousePos]),
       [[-0.5, 0.5], [-0.458, 0.458]],
       null,
-      event.removeIcon
+      event.removeIcon,
+      event.removeConnection
     );
-
-    this.iconsPlaced++;
 
     event.addIcon(this.placingIcon);
 

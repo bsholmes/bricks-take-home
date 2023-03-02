@@ -40,12 +40,21 @@ const IconCanvas = ({
 }) => {
   const [glProgram, setGLProgram] = useState(null);
   const [icons, _setIcons] = useState([]);
+  const [iconsCreated, _setIconsCreated] = useState(0);
   const [connections, _setConnections] = useState([]);
+  const [connectionsCreated, _setConnectionsCreated] = useState(0);
+  const [mousePos, _setMousePos] = useState([0, 0, 0, 0]);
 
   const iconsRef = useRef(icons);
   const setIcons = icons => {
     iconsRef.current = icons;
     _setIcons(icons);
+  };
+
+  const iconsCreatedRef = useRef(iconsCreated);
+  const setIconsCreated = num => {
+    iconsCreatedRef.current = num;
+    _setIconsCreated(num);
   };
 
   const connectionsRef = useRef(connections);
@@ -54,11 +63,24 @@ const IconCanvas = ({
     _setConnections(connections);
   };
 
+  const connectionsCreatedRef = useRef(connectionsCreated);
+  const setConnectionsCreated = num => {
+    connectionsCreatedRef.current = num;
+    _setConnectionsCreated(num);
+  };
+
+  const mousePosRef = useRef(mousePos);
+  const setMousePos = pos => {
+    mousePosRef.current = pos;
+    _setMousePos(pos);
+  };
+
   const toolRef = useRef(tool);
   toolRef.current = tool;
 
   const addIcon = (icon) => {
     setIcons([...iconsRef.current, icon]);
+    setIconsCreated(iconsCreatedRef.current + 1);
   };
 
   const removeIcon = (index) => {
@@ -75,10 +97,26 @@ const IconCanvas = ({
 
   const addConnection = (connection) => {
     setConnections([...connectionsRef.current, connection]);
+    setConnectionsCreated(connectionsCreatedRef.current + 1);
   };
 
   const removeConnection = (index) => {
     const deleteIndex = connectionsRef.current.findIndex(connection => connection.index === index);
+
+    if (deleteIndex < 0) {
+      return;
+    }
+
+    const connectionToRemove = connectionsRef.current[deleteIndex];
+
+    if (connectionToRemove) {
+      // reset icon connections
+      connectionToRemove.startIcon.sideConnections[connectionToRemove.startSide] = null;
+      if (connectionToRemove.endIcon) {
+        connectionToRemove.endIcon.sideConnections[connectionToRemove.endSide] = null;
+      }
+    }
+
     if (deleteIndex === 0) {
       setConnections(connectionsRef.current.slice(1, connectionsRef.current.length));
     } else {
@@ -97,11 +135,15 @@ const IconCanvas = ({
       Z_POS
     );
 
+    setMousePos(worldMousePos);
+
     event = {
       ...event,
 
       worldMousePos,
       icons: [...iconsRef.current],
+      iconsCreated: iconsCreatedRef.current,
+      connectionsCreated: connectionsCreatedRef.current,
       camera: CAMERA,
       addIcon,
       removeIcon,
@@ -113,6 +155,10 @@ const IconCanvas = ({
   };
 
   const mouseDownHandler = (event) => {
+    if (event.button !== 0) {
+      return;
+    }
+
     event.preventDefault();
 
     toolRef.current.onMouseDown && toolRef.current.onMouseDown(modifyMouseEvent(event));
@@ -155,7 +201,7 @@ const IconCanvas = ({
     // draw connections
     if (connections && connections.length) {
       for (let i = 0; i < connections.length; ++i) {
-        connections[i].draw(gl, glProgram);
+        connections[i].draw(gl, glProgram, mousePos);
       }
     }
   };
@@ -179,6 +225,12 @@ const IconCanvas = ({
           ProjectionMatrix(CAMERA.fov, CAMERA.aspect, CAMERA.nearDist, CAMERA.farDist)
         )
       )
+    );
+
+    const colorMultiplyUniform = gl.getUniformLocation(program, 'uColorMultiply');
+    gl.uniform4fv(
+      colorMultiplyUniform,
+      new Float32Array([1, 1, 1, 1])
     );
 
     CreateTexture(gl, program, CircuitIcon, 0);

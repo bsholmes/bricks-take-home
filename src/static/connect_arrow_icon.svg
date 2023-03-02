@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <svg viewBox="32 111 47 57" xmlns="http://www.w3.org/2000/svg">
-  <rect x="0" y="0" width="1556" height="1556" style="fill: rgb(240, 240, 240);"/>
   <path d="M 49.238 163.867 L 77.284 209.076 L 21.192 209.076 L 49.238 163.867 Z" style="stroke: rgb(0, 0, 0);" transform="matrix(0, -1, 1, 0, -130.925339, 188.923965)" bxShape="triangle 21.192 163.867 56.092 45.209 0.5 0 1@c6163cfc"/>
 </svg>

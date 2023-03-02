@@ -5,7 +5,11 @@ import {
 import {
   DEG_TO_RAD,
   vec4Add,
-  vec4Mult
+  vec4Mult,
+  mat4Mult,
+  RotationMatrix,
+  ScaleMatrix,
+  TranslationMatrix
 } from './vectorMath';
 
 export const isPowerOfTwo = (x) => {
@@ -162,4 +166,41 @@ export const projectMouseCoordsToWorldSpace = (mouseCoords, canvasSize, camera, 
   const worldPos = vec4Add(camera.position, vec4Mult([width, height, distance, 0], viewCoords));
 
   return worldPos;
+};
+
+export const getArrowTransformMatrix = (sideIndex, position, scale) => {
+  // rotate and offset based on side index
+  let offset = [];
+  let rotDegrees = 0;
+  switch (sideIndex) {
+    case 1:
+      offset = [scale[0] * 0.5, 0, 0, 0];
+      break;
+    case 2:
+      offset = [0, scale[1] * -0.5, 0, 0];
+      rotDegrees = -90;
+      break;
+    case 3:
+      offset = [0, scale[1] * 0.5, 0, 0];
+      rotDegrees = 90;
+      break;
+    case 0:
+    default:
+      offset = [scale[0] * -0.5, 0, 0, 0];
+      rotDegrees = 180;
+      break;
+  }
+
+  const location = vec4Add(
+    position,
+    offset
+  );
+
+  return mat4Mult(
+    RotationMatrix(rotDegrees, [0, 0, 1, 0]),
+    mat4Mult(
+      ScaleMatrix(scale),
+      TranslationMatrix(location)
+    )
+  );
 };
