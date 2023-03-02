@@ -24,8 +24,9 @@ import DraggableIcon from '../gl/DraggableIcon';
 
 import unlitVertexShader from '../shaders/unlitVertexShader.glsl';
 import unlitFragmentShader from '../shaders/unlitFragmentShader.glsl';
-import icon from '../static/circuit_icon.svg';
+import CircuitIcon from '../static/circuit_icon.svg';
 import DeleteIcon from '../static/delete_icon.svg';
+import ConnectArrowIcon from '../static/connect_arrow_icon.svg';
 
 
 const CANVAS_SIZE = [1600, 900];
@@ -52,6 +53,7 @@ const IconCanvas = () => {
   const mouseDownHandler = (event) => {
     event.preventDefault();
 
+    const currentIcons = iconsRef.current;
     const worldMousePos = projectMouseCoordsToWorldSpace(
       [event.pageX - event.target.offsetLeft, event.pageY - event.target.offsetTop],
       CANVAS_SIZE,
@@ -60,14 +62,15 @@ const IconCanvas = () => {
     );
     event.worldMousePos = worldMousePos;
 
-    if (iconsRef.current && iconsRef.current.length) {
-      for (let i = 0; i < iconsRef.current.length; ++i) {
-        iconsRef.current[i].onMouseDown(event);
+    if (currentIcons && currentIcons.length) {
+      for (let i = 0; i < currentIcons.length; ++i) {
+        currentIcons[i].onMouseDown(event);
       }
     }
   };
 
   const mouseUpHandler = (event) => {
+    const currentIcons = iconsRef.current;
     const worldMousePos = projectMouseCoordsToWorldSpace(
       [event.pageX - event.target.offsetLeft, event.pageY - event.target.offsetTop],
       CANVAS_SIZE,
@@ -76,14 +79,15 @@ const IconCanvas = () => {
     );
     event.worldMousePos = worldMousePos;
 
-    if (iconsRef.current && iconsRef.current.length) {
-      for (let i = 0; i < iconsRef.current.length; ++i) {
-        iconsRef.current[i].onMouseUp(event);
+    if (currentIcons && currentIcons.length) {
+      for (let i = 0; i < currentIcons.length; ++i) {
+        currentIcons[i].onMouseUp(event);
       }
     }
   };
 
   const mouseOutHandler = (event) => {
+    const currentIcons = iconsRef.current;
     const worldMousePos = projectMouseCoordsToWorldSpace(
       [event.pageX - event.target.offsetLeft, event.pageY - event.target.offsetTop],
       CANVAS_SIZE,
@@ -92,14 +96,15 @@ const IconCanvas = () => {
     );
     event.worldMousePos = worldMousePos;
 
-    if (iconsRef.current && iconsRef.current.length) {
-      for (let i = 0; i < iconsRef.current.length; ++i) {
-        iconsRef.current[i].onMouseOut(event);
+    if (currentIcons && currentIcons.length) {
+      for (let i = 0; i < currentIcons.length; ++i) {
+        currentIcons[i].onMouseOut(event);
       }
     }
   };
 
   const mouseOverHandler = (event) => {
+    const currentIcons = iconsRef.current;
     const worldMousePos = projectMouseCoordsToWorldSpace(
       [event.pageX - event.target.offsetLeft, event.pageY - event.target.offsetTop],
       CANVAS_SIZE,
@@ -108,14 +113,15 @@ const IconCanvas = () => {
     );
     event.worldMousePos = worldMousePos;
 
-    if (iconsRef.current && iconsRef.current.length) {
-      for (let i = 0; i < iconsRef.current.length; ++i) {
-        iconsRef.current[i].onMouseOver(event);
+    if (currentIcons && currentIcons.length) {
+      for (let i = 0; i < currentIcons.length; ++i) {
+        currentIcons[i].onMouseOver(event);
       }
     }
   };
 
   const mouseMoveHandler = (event) => {
+    const currentIcons = iconsRef.current;
     const worldMousePos = projectMouseCoordsToWorldSpace(
       [event.pageX - event.target.offsetLeft, event.pageY - event.target.offsetTop],
       CANVAS_SIZE,
@@ -123,10 +129,12 @@ const IconCanvas = () => {
       2,
     );
     event.worldMousePos = worldMousePos;
+    event.icons = currentIcons;
+    event.camera = CAMERA;
 
-    if (iconsRef.current && iconsRef.current.length) {
-      for (let i = 0; i < iconsRef.current.length; ++i) {
-        iconsRef.current[i].onMouseMove(event);
+    if (currentIcons && currentIcons.length) {
+      for (let i = 0; i < currentIcons.length; ++i) {
+        currentIcons[i].onMouseMove(event);
       }
     }
   };
@@ -192,9 +200,11 @@ const IconCanvas = () => {
       }
     }
 
-    CreateTexture(gl, program, icon, 0);
+    CreateTexture(gl, program, CircuitIcon, 0);
 
     CreateTexture(gl, program, DeleteIcon, 1);
+
+    CreateTexture(gl, program, ConnectArrowIcon, 2);
 
     setIcons([
       new DraggableIcon(
@@ -204,7 +214,7 @@ const IconCanvas = () => {
         0,
         1,
         TranslationMatrix([0, 0, 2]),
-        [[-0.5, 0.5], [-0.5, 0.5]],
+        [[-0.5, 0.5], [-0.458, 0.458]],
         null,
         removeIcon
       ),
@@ -215,7 +225,7 @@ const IconCanvas = () => {
         0,
         1,
         TranslationMatrix([1, 1, 2]),
-        [[-0.5, 0.5], [-0.5, 0.5]],
+        [[-0.5, 0.5], [-0.458, 0.458]],
         null,
         removeIcon
       ),
@@ -226,7 +236,7 @@ const IconCanvas = () => {
         0,
         1,
         TranslationMatrix([2, 2, 2]),
-        [[-0.5, 0.5], [-0.5, 0.5]],
+        [[-0.5, 0.5], [-0.458, 0.458]],
         null,
         removeIcon
       ),
@@ -237,7 +247,7 @@ const IconCanvas = () => {
         0,
         1,
         TranslationMatrix([-1, -1, 2]),
-        [[-0.5, 0.5], [-0.5, 0.5]],
+        [[-0.5, 0.5], [-0.458, 0.458]],
         null,
         removeIcon
       ),
@@ -248,16 +258,11 @@ const IconCanvas = () => {
         0,
         1,
         TranslationMatrix([-2, -2, 2]),
-        [[-0.5, 0.5], [-0.5, 0.5]],
+        [[-0.5, 0.5], [-0.458, 0.458]],
         null,
         removeIcon
       )
     ]);
-
-    LoadGeometry(gl, program, vertData, indices, 4, 2);
-
-    // load texture
-    LoadTexture(gl, program, icon, 0);
 
     gl.canvas.addEventListener('mousedown', mouseDownHandler);
     gl.canvas.addEventListener('mouseup', mouseUpHandler);

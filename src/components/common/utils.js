@@ -154,7 +154,6 @@ export const projectMouseCoordsToWorldSpace = (mouseCoords, canvasSize, camera, 
   const distance = zPos - camera.position[2];
 
   // calculate the plane width and height at the distance of the zPos
-  // const center = vec4Scale(vec4Sub(camera.position, camera.getForwardDir()), distance);
   const height = 2 * Math.tan((camera.fov * DEG_TO_RAD) / 2) * distance;
   const width = height * camera.aspect;
 

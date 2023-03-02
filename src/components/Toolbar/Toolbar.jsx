@@ -37,6 +37,7 @@ const Container = styled.div`
   justify-content: start;
   border: 2px solid #000000;
   border-radius: 4px;
+  margin-right: 4px;
 `;
 
 export default Toolbar;

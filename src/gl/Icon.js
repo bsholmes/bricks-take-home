@@ -94,18 +94,26 @@ export default class Icon {
 
   isMouseWithinBounds (worldMousePos) {
     // get our position from transformMatrix
-    let worldPos = getTranslation(this.transformMatrix);
-
-    const xMin = worldPos[0] + this.extents[0][0];
-    const xMax = worldPos[0] + this.extents[0][1];
-    const yMin = worldPos[1] + this.extents[1][0];
-    const yMax = worldPos[1] + this.extents[1][1];
+    const bounds = this.getBounds();
 
     return (
-      worldMousePos[0] >= xMin &&
-      worldMousePos[0] <= xMax &&
-      worldMousePos[1] >= yMin &&
-      worldMousePos[1] <= yMax
+      worldMousePos[0] >= bounds[0] &&
+      worldMousePos[0] <= bounds[1] &&
+      worldMousePos[1] >= bounds[2] &&
+      worldMousePos[1] <= bounds[3]
     );
+  }
+
+  getBoundsForPos (position) {
+    return [
+      position[0] + this.extents[0][0], // left
+      position[0] + this.extents[0][1], // right
+      position[1] + this.extents[1][0], // bottom
+      position[1] + this.extents[1][1], // top
+    ];
+  }
+
+  getBounds () {
+    return this.getBoundsForPos(getTranslation(this.transformMatrix));
   }
 };
