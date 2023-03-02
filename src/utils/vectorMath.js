@@ -219,6 +219,15 @@ export const TranslationMatrix = (translateVec) => {
   ]);
 };
 
+export const ScaleMatrix = (scaleVec) => {
+  return ([
+    scaleVec[0], 0, 0, 0,
+    0, scaleVec[1], 0, 0,
+    0, 0, scaleVec[2], 0,
+    0, 0, 0, 1
+  ]);
+};
+
 export const getTranslation = (transformMat) => {
   return [
     transformMat[12],

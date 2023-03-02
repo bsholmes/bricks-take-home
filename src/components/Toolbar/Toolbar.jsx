@@ -37,6 +37,9 @@ const Container = styled.div`
   border: 2px solid #000000;
   border-radius: 4px;
   margin-right: 4px;
+  height: 100%;
+  position: sticky;
+  top: 8px;
 `;
 
 export default Toolbar;

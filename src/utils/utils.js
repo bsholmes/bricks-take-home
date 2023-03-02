@@ -148,7 +148,8 @@ export const projectMouseCoordsToWorldSpace = (mouseCoords, canvasSize, camera, 
   const viewCoords = [
     -0.5 + (mouseCoords[0] / canvasSize[0]),
     0.5 - (mouseCoords[1] / canvasSize[1]),
-    1
+    1,
+    0
   ];
 
   const distance = zPos - camera.position[2];
@@ -158,7 +159,7 @@ export const projectMouseCoordsToWorldSpace = (mouseCoords, canvasSize, camera, 
   const width = height * camera.aspect;
 
   // multiply by the viewCoords
-  const worldPos = vec4Add(camera.position, vec4Mult([width, height, distance], viewCoords));
+  const worldPos = vec4Add(camera.position, vec4Mult([width, height, distance, 0], viewCoords));
 
   return worldPos;
 };

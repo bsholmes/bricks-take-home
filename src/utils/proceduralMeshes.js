@@ -168,3 +168,5 @@ export const PlaneModel = (xSegments, ySegments, extents = [1, 1, 1]) => {
 
   return { vertData, indices };
 };
+
+export const QUAD = new PlaneModel(1, 1, [1, 1, 0]);

@@ -17,12 +17,17 @@ export default class DraggableIcon extends Icon {
   clickOffset = [0, 0, 0];
   deleteIcon = null;
 
-  onDelete = (index) => {}
+  onDelete = (index) => {};
+
+  sideConnections = [
+    null, // left
+    null, // right
+    null, // bottom
+    null  // top
+  ];
 
   constructor(
     index,
-    geometry,
-    indices,
     textureIndex,
     secondaryTextureIndex,
     transformMatrix,
@@ -32,8 +37,6 @@ export default class DraggableIcon extends Icon {
   ) {
     super(
       index,
-      geometry,
-      indices,
       textureIndex,
       secondaryTextureIndex,
       transformMatrix,
@@ -127,9 +130,6 @@ export default class DraggableIcon extends Icon {
       adjustedPosition[0] += collision.overlap[0];
       adjustedPosition[1] += collision.overlap[1];
     }
-
-    // TODO: update connections
-
 
     this.transformMatrix = TranslationMatrix(adjustedPosition);
   }

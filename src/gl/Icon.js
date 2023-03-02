@@ -1,3 +1,4 @@
+import { QUAD } from '../utils/proceduralMeshes';
 import {
   LoadTexture,
   LoadGeometry,
@@ -20,12 +21,10 @@ export default class Icon {
   extents; // [[xMin, xMax], [yMin, yMax]]
 
   clicked = false;
-  onClick = () => {}
+  onClick = () => {};
 
   constructor(
     index,
-    geometry,
-    indices,
     textureIndex,
     secondaryTextureIndex,
     transformMatrix,
@@ -33,8 +32,8 @@ export default class Icon {
     onClick = () => {}
   ) {
     this.index = index;
-    this.geometry = geometry;
-    this.indices = indices;
+    this.geometry = QUAD.vertData;
+    this.indices = QUAD.indices;
     this.textureIndex = textureIndex;
     this.secondaryTextureIndex = secondaryTextureIndex;
     this.transformMatrix = transformMatrix;
@@ -92,9 +91,9 @@ export default class Icon {
     }
   }
 
-  isMouseWithinBounds (worldMousePos) {
+  isMouseWithinBounds (worldMousePos, extentsScale = 1) {
     // get our position from transformMatrix
-    const bounds = this.getBounds();
+    const bounds = this.getBounds(extentsScale);
 
     return (
       worldMousePos[0] >= bounds[0] &&
@@ -104,16 +103,28 @@ export default class Icon {
     );
   }
 
-  getBoundsForPos (position) {
+  getBoundsForPos (position, extentsScale = 1) {
     return [
-      position[0] + this.extents[0][0], // left
-      position[0] + this.extents[0][1], // right
-      position[1] + this.extents[1][0], // bottom
-      position[1] + this.extents[1][1], // top
+      position[0] + this.extents[0][0] * extentsScale, // left
+      position[0] + this.extents[0][1] * extentsScale, // right
+      position[1] + this.extents[1][0] * extentsScale, // bottom
+      position[1] + this.extents[1][1] * extentsScale, // top
     ];
   }
 
-  getBounds () {
-    return this.getBoundsForPos(getTranslation(this.transformMatrix));
+  getBounds (extentsScale = 1) {
+    return this.getBoundsForPos(getTranslation(this.transformMatrix), extentsScale);
+  }
+
+  getSideMidpoints () {
+    const position = getTranslation(this.transformMatrix);
+    const bounds = this.getBounds();
+
+    return [
+      [bounds[0], position[1], position[2], 0], // left
+      [bounds[1], position[1], position[2], 0], // right
+      [position[0], bounds[2], position[2], 0], // bottom
+      [position[0], bounds[3], position[2], 0], // top
+    ];
   }
 };

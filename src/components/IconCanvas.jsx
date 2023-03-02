@@ -23,7 +23,7 @@ import CircuitIcon from '../static/circuit_icon.svg';
 import DeleteIcon from '../static/delete_icon.svg';
 import ConnectArrowIcon from '../static/connect_arrow_icon.svg';
 
-const CANVAS_SIZE = [1600, 900];
+const CANVAS_SIZE = [1500, 1300];
 const CAMERA = new Camera(
   [0, 0, -1, 0],
   [0, 0, 1, 0],
@@ -33,17 +33,25 @@ const CAMERA = new Camera(
   90,
   CANVAS_SIZE[0] / CANVAS_SIZE[1]
 );
+const Z_POS = 3.33;
 
 const IconCanvas = ({
   tool
 }) => {
   const [glProgram, setGLProgram] = useState(null);
   const [icons, _setIcons] = useState([]);
+  const [connections, _setConnections] = useState([]);
 
   const iconsRef = useRef(icons);
   const setIcons = icons => {
     iconsRef.current = icons;
     _setIcons(icons);
+  };
+
+  const connectionsRef = useRef(connections);
+  const setConnections = connections => {
+    connectionsRef.current = connections;
+    _setConnections(connections);
   };
 
   const toolRef = useRef(tool);
@@ -66,11 +74,19 @@ const IconCanvas = ({
   };
 
   const addConnection = (connection) => {
-
+    setConnections([...connectionsRef.current, connection]);
   };
 
-  const removeConnection = (connection) => {
-
+  const removeConnection = (index) => {
+    const deleteIndex = connectionsRef.current.findIndex(connection => connection.index === index);
+    if (deleteIndex === 0) {
+      setConnections(connectionsRef.current.slice(1, connectionsRef.current.length));
+    } else {
+      setConnections([
+        ...connectionsRef.current.slice(0, deleteIndex),
+        ...connectionsRef.current.slice(deleteIndex + 1, connectionsRef.current.length)
+      ]);
+    }
   };
 
   const modifyMouseEvent = (event) => {
@@ -78,7 +94,7 @@ const IconCanvas = ({
       [event.pageX - event.target.offsetLeft, event.pageY - event.target.offsetTop],
       CANVAS_SIZE,
       CAMERA,
-      2
+      Z_POS
     );
 
     event = {
@@ -137,6 +153,11 @@ const IconCanvas = ({
     }
 
     // draw connections
+    if (connections && connections.length) {
+      for (let i = 0; i < connections.length; ++i) {
+        connections[i].draw(gl, glProgram);
+      }
+    }
   };
 
   const init = (gl) => {
@@ -187,7 +208,6 @@ const RoundedCorners = styled.div`
   border-radius: 18px;
   overflow: hidden;
   display: inline-block;
-  height: 900px;
 `;
 
 export default IconCanvas;
