@@ -1,7 +1,7 @@
 import {
   vec4Sub,
   vec4Normalize
-} from '../components/common/vectorMath';
+} from '../utils/vectorMath';
 
 export default class Camera {
   position;

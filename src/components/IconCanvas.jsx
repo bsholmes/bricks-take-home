@@ -1,24 +1,23 @@
 import {
   useState,
-  useRef
+  useRef,
+  useEffect
 } from 'react';
 import styled from 'styled-components';
 
-import Canvas from './common/Canvas';
+import Canvas from './Canvas';
 import {
   CreateAndLinkProgramWithShaders,
   CreateTexture,
-  LoadTexture,
-  LoadGeometry,
   projectMouseCoordsToWorldSpace
-} from './common/utils';
-import { PlaneModel } from './common/proceduralMeshes';
+} from '../utils/utils';
+import { PlaneModel } from '../utils/proceduralMeshes';
 import {
   mat4Mult,
   ProjectionMatrix,
   TranslationMatrix,
   ViewMatrix
-} from './common/vectorMath';
+} from '../utils/vectorMath';
 import Camera from '../gl/Camera';
 import DraggableIcon from '../gl/DraggableIcon';
 
@@ -40,7 +39,9 @@ const CAMERA = new Camera(
   CANVAS_SIZE[0] / CANVAS_SIZE[1],
 );
 
-const IconCanvas = () => {
+const IconCanvas = ({
+  tool
+}) => {
   const [glProgram, setGLProgram] = useState(null);
   const [icons, _setIcons] = useState([]);
 
@@ -50,93 +51,48 @@ const IconCanvas = () => {
     _setIcons(icons);
   };
 
+  const toolRef = useRef(tool);
+  toolRef.current = tool;
+
+  const modifyMouseEvent = (event) => {
+    const worldMousePos = projectMouseCoordsToWorldSpace(
+      [event.pageX - event.target.offsetLeft, event.pageY - event.target.offsetTop],
+      CANVAS_SIZE,
+      CAMERA,
+      2,
+    );
+    event.worldMousePos = worldMousePos;
+    event.icons = [...iconsRef.current];
+    event.camera = CAMERA;
+    event.addIcon = (icon) => {
+      setIcons([...iconsRef.current, icon]);
+    };
+    event.removeIcon = () => {};
+    event.addConnection = () => {};
+    event.removeConnection = () => {};
+    return event;
+  }
+
   const mouseDownHandler = (event) => {
     event.preventDefault();
 
-    const currentIcons = iconsRef.current;
-    const worldMousePos = projectMouseCoordsToWorldSpace(
-      [event.pageX - event.target.offsetLeft, event.pageY - event.target.offsetTop],
-      CANVAS_SIZE,
-      CAMERA,
-      2,
-    );
-    event.worldMousePos = worldMousePos;
-
-    if (currentIcons && currentIcons.length) {
-      for (let i = 0; i < currentIcons.length; ++i) {
-        currentIcons[i].onMouseDown(event);
-      }
-    }
+    toolRef.current.onMouseDown && toolRef.current.onMouseDown(modifyMouseEvent(event));
   };
 
   const mouseUpHandler = (event) => {
-    const currentIcons = iconsRef.current;
-    const worldMousePos = projectMouseCoordsToWorldSpace(
-      [event.pageX - event.target.offsetLeft, event.pageY - event.target.offsetTop],
-      CANVAS_SIZE,
-      CAMERA,
-      2,
-    );
-    event.worldMousePos = worldMousePos;
-
-    if (currentIcons && currentIcons.length) {
-      for (let i = 0; i < currentIcons.length; ++i) {
-        currentIcons[i].onMouseUp(event);
-      }
-    }
+    toolRef.current.onMouseUp && toolRef.current.onMouseUp(modifyMouseEvent(event));
   };
 
   const mouseOutHandler = (event) => {
-    const currentIcons = iconsRef.current;
-    const worldMousePos = projectMouseCoordsToWorldSpace(
-      [event.pageX - event.target.offsetLeft, event.pageY - event.target.offsetTop],
-      CANVAS_SIZE,
-      CAMERA,
-      2,
-    );
-    event.worldMousePos = worldMousePos;
-
-    if (currentIcons && currentIcons.length) {
-      for (let i = 0; i < currentIcons.length; ++i) {
-        currentIcons[i].onMouseOut(event);
-      }
-    }
+    toolRef.current.onMouseOut && toolRef.current.onMouseOut(modifyMouseEvent(event));
   };
 
   const mouseOverHandler = (event) => {
-    const currentIcons = iconsRef.current;
-    const worldMousePos = projectMouseCoordsToWorldSpace(
-      [event.pageX - event.target.offsetLeft, event.pageY - event.target.offsetTop],
-      CANVAS_SIZE,
-      CAMERA,
-      2,
-    );
-    event.worldMousePos = worldMousePos;
-
-    if (currentIcons && currentIcons.length) {
-      for (let i = 0; i < currentIcons.length; ++i) {
-        currentIcons[i].onMouseOver(event);
-      }
-    }
+    toolRef.current.onMouseOver && toolRef.current.onMouseOver(modifyMouseEvent(event));
   };
 
   const mouseMoveHandler = (event) => {
-    const currentIcons = iconsRef.current;
-    const worldMousePos = projectMouseCoordsToWorldSpace(
-      [event.pageX - event.target.offsetLeft, event.pageY - event.target.offsetTop],
-      CANVAS_SIZE,
-      CAMERA,
-      2,
-    );
-    event.worldMousePos = worldMousePos;
-    event.icons = currentIcons;
-    event.camera = CAMERA;
-
-    if (currentIcons && currentIcons.length) {
-      for (let i = 0; i < currentIcons.length; ++i) {
-        currentIcons[i].onMouseMove(event);
-      }
-    }
+    toolRef.current.onMouseMove && toolRef.current.onMouseMove(modifyMouseEvent(event));
   };
 
   const draw = (gl) => {
@@ -159,8 +115,6 @@ const IconCanvas = () => {
 
     // draw connections
 
-    // draw a sphere with the given image as its texture with a spherical projection
-    // gl.drawElements(gl.TRIANGLE_STRIP, indexCount, gl.UNSIGNED_SHORT, 0);
   };
 
   const init = (gl) => {
@@ -205,64 +159,6 @@ const IconCanvas = () => {
     CreateTexture(gl, program, DeleteIcon, 1);
 
     CreateTexture(gl, program, ConnectArrowIcon, 2);
-
-    setIcons([
-      new DraggableIcon(
-        0,
-        vertData,
-        indices,
-        0,
-        1,
-        TranslationMatrix([0, 0, 2]),
-        [[-0.5, 0.5], [-0.458, 0.458]],
-        null,
-        removeIcon
-      ),
-      new DraggableIcon(
-        1,
-        vertData,
-        indices,
-        0,
-        1,
-        TranslationMatrix([1, 1, 2]),
-        [[-0.5, 0.5], [-0.458, 0.458]],
-        null,
-        removeIcon
-      ),
-      new DraggableIcon(
-        2,
-        vertData,
-        indices,
-        0,
-        1,
-        TranslationMatrix([2, 2, 2]),
-        [[-0.5, 0.5], [-0.458, 0.458]],
-        null,
-        removeIcon
-      ),
-      new DraggableIcon(
-        3,
-        vertData,
-        indices,
-        0,
-        1,
-        TranslationMatrix([-1, -1, 2]),
-        [[-0.5, 0.5], [-0.458, 0.458]],
-        null,
-        removeIcon
-      ),
-      new DraggableIcon(
-        4,
-        vertData,
-        indices,
-        0,
-        1,
-        TranslationMatrix([-2, -2, 2]),
-        [[-0.5, 0.5], [-0.458, 0.458]],
-        null,
-        removeIcon
-      )
-    ]);
 
     gl.canvas.addEventListener('mousedown', mouseDownHandler);
     gl.canvas.addEventListener('mouseup', mouseUpHandler);

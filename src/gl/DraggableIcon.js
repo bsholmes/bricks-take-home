@@ -3,9 +3,11 @@ import {
   TranslationMatrix,
   getTranslation,
   vec4Add
-} from '../components/common/vectorMath';
+} from '../utils/vectorMath';
+import { PlaneModel } from '../utils/proceduralMeshes';
+
 import Icon from './Icon';
-import { PlaneModel } from '../components/common/proceduralMeshes';
+
 
 const DELETE_ICON_OFFSET = [0.42, 0.36, 0];
 
@@ -128,7 +130,7 @@ export default class DraggableIcon extends Icon {
 
     // TODO: update connections
 
-    
+
     this.transformMatrix = TranslationMatrix(adjustedPosition);
   }
 

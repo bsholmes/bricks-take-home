@@ -1,12 +1,12 @@
 import {
   LoadTexture,
   LoadGeometry,
-} from '../components/common/utils';
+} from '../utils/utils';
 import {
   TranslationMatrix,
   getTranslation,
   vec4Add
-} from '../components/common/vectorMath';
+} from '../utils/vectorMath';
 
 export default class Icon {
   // used for deletion to prevent the need to search
