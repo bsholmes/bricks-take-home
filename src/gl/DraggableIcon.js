@@ -1,10 +1,11 @@
 import {
   DEG_TO_RAD,
-  TranslationMatrix,
   getTranslation,
-  vec4Add,
   mat4Mult,
-  ScaleMatrix
+  ScaleMatrix,
+  TranslationMatrix,
+  vec4Add,
+  vec4Mult
 } from '../utils/vectorMath';
 
 import Icon from './Icon';
@@ -144,9 +145,6 @@ export default class DraggableIcon extends Icon {
     // collision detection with other nodes and the edge of the canvas
     const { hit, overlap } = this.collisionDetection(position, nodes, camera);
 
-    console.log('hit: ' + hit);
-    console.log('overlap: ' + overlap);
-
     if (hit) {
       adjustedPosition[0] += overlap[0];
       adjustedPosition[1] += overlap[1];
@@ -158,7 +156,7 @@ export default class DraggableIcon extends Icon {
   collisionDetection(position, nodes, camera) {
     // compare bounds to other bounds
     let overlap = [0, 0];
-    let maxOverlap = [0, 0, 0];
+    let adjustDirection = null;
 
     for (let i = 0; i < nodes.length; ++i) {
       if (nodes[i].index === this.index) {
@@ -179,6 +177,11 @@ export default class DraggableIcon extends Icon {
       const boundsOverlapY = overlapBottom || overlapTop;
 
       if (boundsOverlapX && boundsOverlapY) {
+
+        // figure out what direction to adjust
+
+        // calculate the adjustment that will put our icon at the edge of this one
+
         // determine overlap
         let overlapX = 0;
         let overlapY = 0;
@@ -195,23 +198,41 @@ export default class DraggableIcon extends Icon {
           overlapY = otherBounds[2] - bounds[3];
         }
 
-        if (Math.abs(overlapX) > Math.abs(maxOverlap[0])) {
-          maxOverlap[0] = overlapX;
+        if (!adjustDirection) {
+          if (Math.abs(overlapX) < Math.abs(overlapY)) {
+            if (overlapX < 0) {
+              adjustDirection = 0;
+            } else {
+              adjustDirection = 1;
+            }
+          } else {
+            if (overlapY < 0) {
+              adjustDirection = 2;
+            } else {
+              adjustDirection = 3;
+            }
+          }
+          i = 0;
         }
 
-        if (Math.abs(overlapY) > Math.abs(maxOverlap[1])) {
-          maxOverlap[1] = overlapY;
-        }
-      }
+        console.log('adjustDirection: ' + adjustDirection);
 
-      if (Math.abs(maxOverlap[0]) > Math.abs(maxOverlap[1])) {
-        if (Math.abs(maxOverlap[1]) > Math.abs(overlap[1])) {
-          overlap[1] = maxOverlap[1];
+        let adjust = [];
+
+        if (adjustDirection < 2) {
+          adjust[0] = otherBounds[adjustDirection] + this.extents[0][adjustDirection];
+        } else {
+          adjust[0] = position[0];
         }
-      } else {
-        if (Math.abs(maxOverlap[0]) > Math.abs(overlap[0])) {
-          overlap[0] = maxOverlap[0];
+
+        if (adjustDirection >= 2) {
+          adjust[1] = otherBounds[adjustDirection] + this.extents[1][adjustDirection - 2];
+        } else {
+          adjust[1] = position[1];
         }
+
+        overlap[0] = adjust[0] - position[0];
+        overlap[1] = adjust[1] - position[1];
       }
     }
 
