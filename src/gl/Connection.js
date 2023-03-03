@@ -1,17 +1,10 @@
-import { QUAD } from '../utils/proceduralMeshes';
+import { LinePath, QUAD } from '../utils/proceduralMeshes';
 import {
   LoadTexture,
   LoadGeometry,
   getArrowTransformMatrix
 } from '../utils/utils';
-import {
-  IdentityMatrix,
-  mat4Mult,
-  RotationMatrix,
-  ScaleMatrix,
-  TranslationMatrix,
-  vec4Add
-} from '../utils/vectorMath';
+import { IdentityMatrix } from '../utils/vectorMath';
 
 const SCALE = [0.1, 0.1, 0.1];
 
@@ -27,6 +20,8 @@ export default class Connection {
   indices;
   textureIndex;
 
+  onRemove = (index) => {};
+
   constructor(
     index,
     startIcon,
@@ -34,6 +29,7 @@ export default class Connection {
     endIcon,
     endSide,
     textureIndex,
+    onRemove
   ) {
     this.index = index;
     this.startIcon = startIcon;
@@ -44,6 +40,7 @@ export default class Connection {
     this.geometry = QUAD.vertData;
     this.indices = QUAD.indices;
     this.textureIndex = textureIndex;
+    this.onRemove = onRemove;
   }
 
   setEnd(endIcon, endSide) {
@@ -77,9 +74,7 @@ export default class Connection {
       endPos = this.endIcon.getSideMidpoints()[this.endSide];
     }
 
-    // determine number of lines based on number of turns
-    const vertData = [...startPos, 0.5, 0.5, ...endPos, 0.5, 0.5];
-    const indices = [0, 1];
+    const { vertData, indices } = LinePath(startPos, this.startSide, endPos, this.endSide);
 
     LoadGeometry(gl, program, vertData, indices, 4, 2);
 
@@ -92,7 +87,7 @@ export default class Connection {
       )
     );
 
-    gl.drawElements(gl.LINES, indices.length, gl.UNSIGNED_SHORT, 0);
+    gl.drawElements(gl.LINE_STRIP, indices.length, gl.UNSIGNED_SHORT, 0);
   }
 
   draw (gl, program, worldMousePos) {

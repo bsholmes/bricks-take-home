@@ -121,6 +121,8 @@ export default class DraggableIcon extends Icon {
         );
       }
     }
+
+    return this.clicked;
   }
 
   onMouseUp (event) {

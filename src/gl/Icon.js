@@ -94,6 +94,8 @@ export default class Icon {
     else {
       this.clicked = false;
     }
+
+    return this.clicked;
   }
 
   onMouseUp (event) {

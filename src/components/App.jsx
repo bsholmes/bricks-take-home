@@ -16,11 +16,17 @@ const TOOL_MAP = [
 
 export const App = () => {
   const [toolMode, setToolMode] = useState(0);
+  const currentTool = TOOL_MAP[toolMode];
+
+  const onToolChange = (index) => {
+    currentTool.onToolChange && currentTool.onToolChange();
+    setToolMode(index);
+  };
 
   return (
     <Container id='App'>
-      <Toolbar toolMode={toolMode} onToolChange={setToolMode} />
-      <IconCanvas tool={TOOL_MAP[toolMode]} />
+      <Toolbar toolMode={toolMode} onToolChange={onToolChange} />
+      <IconCanvas tool={currentTool} />
     </Container>
   );
 };

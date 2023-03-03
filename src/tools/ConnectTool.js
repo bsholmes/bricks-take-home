@@ -69,7 +69,8 @@ export default class ConnectTool {
         closestSideIndex,
         null,
         -1,
-        2
+        2,
+        event.removeConnection
       );
 
       closestIcon.sideConnections[closestSideIndex] = this.workingConnection;
@@ -136,6 +137,13 @@ export default class ConnectTool {
         event.removeIcon(this.indicatorArrow.index);
         this.indicatorArrow = null;
       }
+    }
+  }
+
+  onToolChange() {
+    if (this.workingConnection) {
+      this.workingConnection.onRemove(this.workingConnection.index);
+      this.workingConnection = null;
     }
   }
 }

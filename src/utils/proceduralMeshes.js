@@ -1,4 +1,11 @@
-import { DEG_TO_RAD } from './vectorMath';
+import {
+  DEG_TO_RAD,
+  vec4Add,
+  vec4EqualTo,
+  vec4Scale
+} from './vectorMath';
+
+import { getArrowDirection } from './utils';
 
 // Creates sphere vertex data given a number of segments and rings
 export const SphereModel = (segments, rings, radius) => {
@@ -169,4 +176,110 @@ export const PlaneModel = (xSegments, ySegments, extents = [1, 1, 1]) => {
   return { vertData, indices };
 };
 
-export const QUAD = new PlaneModel(1, 1, [1, 1, 0]);
+export const QUAD = PlaneModel(1, 1, [1, 1, 0]);
+
+export const LinePath = (
+  startPos,
+  startSide,
+  endPos,
+  endSide
+) => {
+  const MIN_LINE_DIST = 0.2;
+  let vertData = [];
+
+  const xDist = endPos[0] - startPos[0];
+  const yDist = endPos[1] - startPos[1];
+
+  const absXDist = Math.abs(xDist);
+  const absYDist = Math.abs(yDist);
+
+  let longDist = absXDist > absYDist ? xDist : yDist;
+  let shortDist = absXDist < absYDist ? xDist : yDist;
+
+  let longAxis = absXDist > absYDist ? [1, 0, 0, 0] : [0, 1, 0, 0];
+  let shortAxis = absXDist < absYDist ? [1, 0, 0, 0] : [0, 1, 0, 0];
+
+  const startArrowDir = getArrowDirection(startSide);
+  const endArrowDir = getArrowDirection(endSide);
+
+  let longAxisIndex = absXDist > absYDist ? 0 : 1;
+  let shortAxisIndex = absXDist > absYDist ? 1 : 0;
+
+  // if the major axis would be parallel to the arrow direction
+  // and the distance and arrow direction in that axis have the same sign
+  // then switch axes
+  // otherwise the lines will frequently cross directly over the icon
+  if (
+    Math.abs(longAxis[0]) === Math.abs(startArrowDir[0]) &&
+    Math.abs(longAxis[1]) === Math.abs(startArrowDir[1]) &&
+    (
+      Math.sign(longDist) === Math.sign(startArrowDir[longAxisIndex]) ||
+      Math.sign(longDist) === Math.sign(endArrowDir[longAxisIndex])
+    )
+  ) {
+    let tempAxis = longAxis;
+    longAxis = shortAxis;
+    shortAxis = tempAxis;
+
+    let tempAxisIndex = longAxisIndex;
+    longAxisIndex = shortAxisIndex;
+    shortAxisIndex = tempAxisIndex;
+
+    let tempDist = longDist;
+    longDist = shortDist;
+    shortDist = tempDist;
+  }
+
+  // generate right-angled path from start to end
+
+  // small segment aligned to arrow, in opposite direction
+  vertData = [...startPos, 0.5, 0.5];
+
+  let point = vec4Add(
+    startPos,
+    vec4Scale(startArrowDir, -MIN_LINE_DIST)
+  );
+  point[2] = startPos[2];
+  vertData = [...vertData, ...point, 0.5, 0.5];
+
+  // second segment in the longer axis to end, half the distance
+  point = vec4Add(
+    vec4Scale(shortAxis, point[shortAxisIndex]),
+    vec4Scale(
+      longAxis,
+      point[longAxisIndex] +
+      longDist * 0.5 +
+      vec4Scale(startArrowDir, MIN_LINE_DIST)[longAxisIndex]) // compensate for first-segment offset
+  );
+  point[2] = startPos[2];
+  vertData = [...vertData, ...point, 0.5, 0.5];
+
+  // third segment in the shorter axis, full length to where the last segment will be
+  point = vec4Add(
+    vec4Scale(longAxis, point[longAxisIndex]),
+      vec4Scale(
+        shortAxis,
+        endPos[shortAxisIndex] + endArrowDir[shortAxisIndex] * -MIN_LINE_DIST
+      )
+  );
+  point[2] = startPos[2];
+  vertData = [...vertData, ...point, 0.5, 0.5];
+
+  // fourth segment, similar to second, the second half of the distance
+  point = vec4Add(
+    vec4Scale(shortAxis, point[shortAxisIndex]),
+    vec4Scale(longAxis, point[longAxisIndex] + longDist * 0.5)
+  );
+  point[2] = startPos[2];
+  vertData = [...vertData, ...point, 0.5, 0.5];
+
+  // fifth segment, similar to first, aligned to end arrow in opposite direction
+  vertData = [...vertData, ...endPos, 0.5, 0.5];
+
+  const indices = [0, 1, 2, 3, 4, 5];
+
+  return {
+    vertData,
+    indices
+  };
+};

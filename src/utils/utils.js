@@ -175,6 +175,7 @@ export const getArrowTransformMatrix = (sideIndex, position, scale) => {
   switch (sideIndex) {
     case 1:
       offset = [scale[0] * 0.5, 0, 0, 0];
+      // implicitly rotDegrees = 0
       break;
     case 2:
       offset = [0, scale[1] * -0.5, 0, 0];
@@ -204,3 +205,17 @@ export const getArrowTransformMatrix = (sideIndex, position, scale) => {
     )
   );
 };
+
+export const getArrowDirection = (side) => {
+  switch (side) {
+    case 1:
+      return [-1, 0, 0, 0];
+    case 2:
+      return [0, 1, 0, 0];
+    case 3:
+      return [0, -1, 0, 0];
+    case 0:
+    default:
+      return [1, 0, 0, 0];
+  }
+}

@@ -39,4 +39,12 @@ export default class AddTool {
       this.placingIcon.onMouseMove(event);
     }
   }
+
+  onToolChange() {
+    // deselect the placing icon
+    if (this.placingIcon) {
+      this.placingIcon.clicked = false;
+      this.placingIcon = null;
+    }
+  }
 }

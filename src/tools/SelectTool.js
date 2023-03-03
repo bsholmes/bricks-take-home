@@ -1,8 +1,15 @@
 export default class SelectTool {
+  selectedIcon = null;
   onMouseDown (event) {
     if (event.icons && event.icons.length) {
       for (let i = 0; i < event.icons.length; ++i) {
-        event.icons[i].onMouseDown(event);
+        // set and unset selected icon so we can deselect when the tool changes
+        if(event.icons[i].onMouseDown(event))
+        {
+          this.selectedIcon = event.icons[i];
+        } else if (this.selectedIcon && this.selectedIcon.index === event.icons[i].index) {
+          this.selectedIcon = null;
+        }
       }
     }
   }
@@ -20,6 +27,15 @@ export default class SelectTool {
       for (let i = 0; i < event.icons.length; ++i) {
         event.icons[i].onMouseMove(event);
       }
+    }
+  }
+
+  onToolChange() {
+    // deselect the placing icon
+    if (this.selectedIcon) {
+      this.selectedIcon.clicked = false;
+      this.selectedIcon.dragging = false;
+      this.selectedIcon = null;
     }
   }
 }

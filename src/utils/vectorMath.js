@@ -75,6 +75,13 @@ export const vec4Normalize = (vec4) => {
   return vec4Scale(vec4, 1 / vec4Magnitude(vec4));
 };
 
+export const vec4EqualTo = (left, right) => {
+  return left[0] === right[0] &&
+    left[1] === right[1] &&
+    left[2] === right[2] &&
+    left[3] === right[3];
+};
+
 /**
  **************** MATRIX ****************
  */
