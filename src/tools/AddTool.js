@@ -1,4 +1,3 @@
-import { PlaneModel } from '../utils/proceduralMeshes';
 import { TranslationMatrix } from '../utils/vectorMath';
 import DraggableIcon from '../gl/DraggableIcon';
 

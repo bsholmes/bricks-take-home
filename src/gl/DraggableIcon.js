@@ -4,8 +4,7 @@ import {
   mat4Mult,
   ScaleMatrix,
   TranslationMatrix,
-  vec4Add,
-  vec4Mult
+  vec4Add
 } from '../utils/vectorMath';
 
 import Icon from './Icon';

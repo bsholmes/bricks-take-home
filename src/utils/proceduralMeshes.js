@@ -1,7 +1,6 @@
 import {
   DEG_TO_RAD,
   vec4Add,
-  vec4EqualTo,
   vec4Scale
 } from './vectorMath';
 
