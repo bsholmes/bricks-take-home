@@ -142,11 +142,14 @@ export default class DraggableIcon extends Icon {
   moveTo(position, nodes, camera) {
     let adjustedPosition = [...position];
     // collision detection with other nodes and the edge of the canvas
-    const collision = this.collisionDetection(position, nodes, camera);
+    const { hit, overlap } = this.collisionDetection(position, nodes, camera);
 
-    if (collision.hit) {
-      adjustedPosition[0] += collision.overlap[0];
-      adjustedPosition[1] += collision.overlap[1];
+    console.log('hit: ' + hit);
+    console.log('overlap: ' + overlap);
+
+    if (hit) {
+      adjustedPosition[0] += overlap[0];
+      adjustedPosition[1] += overlap[1];
     }
 
     this.transformMatrix = TranslationMatrix(adjustedPosition);
@@ -165,13 +168,13 @@ export default class DraggableIcon extends Icon {
       const bounds = this.getBoundsForPos(vec4Add(position, overlap));
       const otherBounds = nodes[i].getBounds();
 
-      const overlapLeft = (bounds[0] < otherBounds[1] && bounds[1] > otherBounds[1]);
-      const overlapRight = (bounds[1] > otherBounds[0] && bounds[0] < otherBounds[0]);
+      const overlapLeft = (bounds[0] <= otherBounds[1] && bounds[1] >= otherBounds[1]);
+      const overlapRight = (bounds[1] >= otherBounds[0] && bounds[0] <= otherBounds[0]);
 
       const boundsOverlapX = overlapLeft || overlapRight;
 
-      const overlapBottom = (bounds[2] < otherBounds[3] && bounds[3] > otherBounds[3]);
-      const overlapTop = (bounds[3] > otherBounds[2] && bounds[2] < otherBounds[2]);
+      const overlapBottom = (bounds[2] <= otherBounds[3] && bounds[3] >= otherBounds[3]);
+      const overlapTop = (bounds[3] >= otherBounds[2] && bounds[2] <= otherBounds[2]);
 
       const boundsOverlapY = overlapBottom || overlapTop;
 
@@ -202,9 +205,13 @@ export default class DraggableIcon extends Icon {
       }
 
       if (Math.abs(maxOverlap[0]) > Math.abs(maxOverlap[1])) {
-        overlap[1] = maxOverlap[1];
+        if (Math.abs(maxOverlap[1]) > Math.abs(overlap[1])) {
+          overlap[1] = maxOverlap[1];
+        }
       } else {
-        overlap[0] = maxOverlap[0];
+        if (Math.abs(maxOverlap[0]) > Math.abs(overlap[0])) {
+          overlap[0] = maxOverlap[0];
+        }
       }
     }
 

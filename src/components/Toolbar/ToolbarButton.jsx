@@ -5,7 +5,7 @@ const ToolbarButton = ({
   selected,
   onClick = () => {}
 }) => {
-  return <ButtonImage src={image} onClick={onClick} selected={selected} />;
+  return <ButtonImage src={image} onMouseDown={onClick} selected={selected} />;
 };
 
 const ButtonImage = styled.img`

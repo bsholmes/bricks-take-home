@@ -23,6 +23,9 @@ export default class AddTool {
     event.addIcon(this.placingIcon);
 
     this.placingIcon.onMouseDown(event);
+
+    // do collision detection against the existing icons so we don't overlap
+    this.placingIcon.onMouseMove(event);
   }
   
   onMouseUp (event) {
