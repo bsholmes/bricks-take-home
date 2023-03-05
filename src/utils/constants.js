@@ -21,4 +21,4 @@ export const TOOL_INDICES = {
   SelectTool: 0,
   AddTool: 1,
   ConnectTool: 2
-}
+};

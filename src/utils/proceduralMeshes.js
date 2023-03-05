@@ -190,17 +190,17 @@ export const LinePath = (
   const MIN_LINE_DIST = 0.2;
   const SIDE_OFFSET_COEFF = 0.2;
   const WIRE_INDEX = [
-    [0,  1,  2,  3],
-    [4,  5,  6,  7],
-    [8,  9,  10, 11],
-    [12, 13, 14, 15],
+    [0, 1, 2, 3],
+    [4, 5, 6, 7],
+    [8, 9, 10, 11],
+    [12, 13, 14, 15]
   ];
 
   // we need a unique wire index based on side combination
   const wireIndex = WIRE_INDEX[startSide][endSide];
 
   // small offest based on sides so wires don't overlap
-  const min_dist = MIN_LINE_DIST +
+  const minDist = MIN_LINE_DIST +
   (MIN_LINE_DIST * SIDE_OFFSET_COEFF * wireIndex);
 
   let vertData = [];
@@ -237,15 +237,15 @@ export const LinePath = (
       Math.sign(longDist) === Math.sign(endArrowDir[longAxisIndex])
     )
   ) {
-    let tempAxis = longAxis;
+    const tempAxis = longAxis;
     longAxis = shortAxis;
     shortAxis = tempAxis;
 
-    let tempAxisIndex = longAxisIndex;
+    const tempAxisIndex = longAxisIndex;
     longAxisIndex = shortAxisIndex;
     shortAxisIndex = tempAxisIndex;
 
-    let tempDist = longDist;
+    const tempDist = longDist;
     longDist = shortDist;
     shortDist = tempDist;
 
@@ -264,8 +264,8 @@ export const LinePath = (
 
   // we can simplify the path by using one less segment
   const simplePath = (
-    vec4Dot(startArrowDir, vec4Scale(shortAxis, Math.sign(shortDist - min_dist))) < 0.5 && 
-    vec4Dot(endArrowDir, vec4Scale(shortAxis, Math.sign(shortDist - min_dist))) < 0.5
+    vec4Dot(startArrowDir, vec4Scale(shortAxis, Math.sign(shortDist - minDist))) < 0.5 &&
+    vec4Dot(endArrowDir, vec4Scale(shortAxis, Math.sign(shortDist - minDist))) < 0.5
   );
 
   // apply min distance to ensure path goes around bounds
@@ -278,13 +278,13 @@ export const LinePath = (
         newDist = Math.max(
           yDist,
           endBounds[3] - startPos[1] +
-          min_dist
+          minDist
         );
       } else {
         newDist = Math.min(
           yDist,
           endBounds[2] - startPos[1] -
-          min_dist
+          minDist
         );
       }
     } else {
@@ -293,13 +293,13 @@ export const LinePath = (
         newDist = Math.max(
           xDist,
           endBounds[1] - startPos[1] +
-          min_dist
+          minDist
         );
       } else {
         newDist = Math.min(
           xDist,
           endBounds[0] - startPos[1] -
-          min_dist
+          minDist
         );
       }
     }
@@ -311,12 +311,12 @@ export const LinePath = (
     }
   }
 
-  // draw the short axis last instead of first if arrows are on opposite sides of icons and 
+  // draw the short axis last instead of first if arrows are on opposite sides of icons and
   // are pointing towards each other
 
   // shouldn't always be true with aroundEnd
   const arrowDot = vec4Dot(startArrowDir, endArrowDir);
-  const shortAxisLast = ((aroundEnd && (arrowDot > 0.5 && arrowDot < 1) || axesSwapped)) || (
+  const shortAxisLast = ((aroundEnd && arrowDot > 0.5 && arrowDot < 1) || axesSwapped) || (
     Math.abs(vec4Dot(startArrowDir, longAxis)) > 0.5 &&
     Math.abs(vec4Dot(endArrowDir, longAxis)) > 0.5 && (
       (startArrowDir[0] > 0 && endArrowDir[0] < 0 && vec4Sub(endPos, startPos)[0] > 0) ||
@@ -333,7 +333,7 @@ export const LinePath = (
 
   let point = vec4Add(
     startPos,
-    vec4Scale(startArrowDir, -min_dist)
+    vec4Scale(startArrowDir, -minDist)
   );
   point[2] = startPos[2];
   vertData = [...vertData, ...point, 0.5, 0.5];
@@ -346,7 +346,7 @@ export const LinePath = (
         longAxis,
         point[longAxisIndex] +
         ((longDist * 0.5) + (MIN_LINE_DIST * SIDE_OFFSET_COEFF * wireIndex) * Math.sign(longDist)) +
-        vec4Scale(startArrowDir, min_dist)[longAxisIndex]) // compensate for first-segment offset
+        vec4Scale(startArrowDir, minDist)[longAxisIndex]) // compensate for first-segment offset
     );
     point[2] = startPos[2];
     vertData = [...vertData, ...point, 0.5, 0.5];
@@ -357,10 +357,10 @@ export const LinePath = (
     // third segment in the shorter axis, full length to where the last segment will be
     point = vec4Add(
       vec4Scale(longAxis, point[longAxisIndex]),
-        vec4Scale(
-          shortAxis,
-          endPos[shortAxisIndex] + endArrowDir[shortAxisIndex] * -min_dist
-        )
+      vec4Scale(
+        shortAxis,
+        endPos[shortAxisIndex] + endArrowDir[shortAxisIndex] * -minDist
+      )
     );
     point[2] = startPos[2];
     vertData = [...vertData, ...point, 0.5, 0.5];
@@ -375,7 +375,7 @@ export const LinePath = (
       (
         longDist * ((simplePath && !shortAxisLast) ? 1 : 0.5) -
        (!simplePath || shortAxisLast ? ((MIN_LINE_DIST * SIDE_OFFSET_COEFF * wireIndex) * Math.sign(longDist)) : 0) +
-       ((simplePath || axesSwapped) ? endArrowDir[longAxisIndex] * -min_dist : 0)
+       ((simplePath || axesSwapped) ? endArrowDir[longAxisIndex] * -minDist : 0)
       )
     )
   );
@@ -386,10 +386,10 @@ export const LinePath = (
     // shorter axis, full length to where the last segment will be
     point = vec4Add(
       vec4Scale(longAxis, point[longAxisIndex]),
-        vec4Scale(
-          shortAxis,
-          endPos[shortAxisIndex] + endArrowDir[shortAxisIndex] * -min_dist
-        )
+      vec4Scale(
+        shortAxis,
+        endPos[shortAxisIndex] + endArrowDir[shortAxisIndex] * -minDist
+      )
     );
     point[2] = startPos[2];
     vertData = [...vertData, ...point, 0.5, 0.5];
@@ -398,10 +398,10 @@ export const LinePath = (
       // long axis, full length to where the last segment will be
       point = vec4Add(
         vec4Scale(shortAxis, point[shortAxisIndex]),
-          vec4Scale(
-            longAxis,
-            endPos[longAxisIndex] + endArrowDir[longAxisIndex] * -min_dist
-          )
+        vec4Scale(
+          longAxis,
+          endPos[longAxisIndex] + endArrowDir[longAxisIndex] * -minDist
+        )
       );
       point[2] = startPos[2];
       vertData = [...vertData, ...point, 0.5, 0.5];
