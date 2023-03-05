@@ -168,42 +168,67 @@ export const projectMouseCoordsToWorldSpace = (mouseCoords, canvasSize, camera, 
   return worldPos;
 };
 
-export const getArrowTransformMatrix = (sideIndex, position, scale) => {
-  // rotate and offset based on side index
-  let offset = [];
-  let rotDegrees = 0;
-  switch (sideIndex) {
-    case 1:
-      offset = [scale[0] * 0.5, 0, 0, 0];
-      // implicitly rotDegrees = 0
-      break;
-    case 2:
-      offset = [0, scale[1] * -0.5, 0, 0];
-      rotDegrees = -90;
-      break;
-    case 3:
-      offset = [0, scale[1] * 0.5, 0, 0];
-      rotDegrees = 90;
-      break;
-    case 0:
-    default:
-      offset = [scale[0] * -0.5, 0, 0, 0];
-      rotDegrees = 180;
-      break;
+export const getArrowTransformMatrix = (icon, sideIndex, position, scale, startPos) => {
+  if (icon) {
+    // rotate and offset based on side index
+    let offset = [];
+    let rotDegrees = 0;
+    switch (sideIndex) {
+      case 1:
+        offset = [scale[0] * 0.5, 0, 0, 0];
+        // implicitly rotDegrees = 0
+        break;
+      case 2:
+        offset = [0, scale[1] * -0.5, 0, 0];
+        rotDegrees = -90;
+        break;
+      case 3:
+        offset = [0, scale[1] * 0.5, 0, 0];
+        rotDegrees = 90;
+        break;
+      case 0:
+      default:
+        offset = [scale[0] * -0.5, 0, 0, 0];
+        rotDegrees = 180;
+        break;
+    }
+
+    const location = vec4Add(
+      position,
+      offset
+    );
+
+    return mat4Mult(
+      RotationMatrix(rotDegrees, [0, 0, 1, 0]),
+      mat4Mult(
+        ScaleMatrix(scale),
+        TranslationMatrix(location)
+      )
+    );
+  } else {
+    // get rotation based on connection axes
+    let rotDegrees = 0;
+
+    const xDist = position[0] - startPos[0];
+    const yDist = position[1] - startPos[1];
+
+    const absXDist = Math.abs(xDist);
+    const absYDist = Math.abs(yDist);
+
+    if (absXDist > absYDist) {
+      rotDegrees = Math.sign(xDist) > 0 ? 180 : 0;
+    } else {
+      rotDegrees = Math.sign(yDist) > 0 ? -90 : 90;
+    }
+
+    return mat4Mult(
+      RotationMatrix(rotDegrees, [0, 0, 1, 0]),
+      mat4Mult(
+        ScaleMatrix(scale),
+        TranslationMatrix(position)
+      )
+    );
   }
-
-  const location = vec4Add(
-    position,
-    offset
-  );
-
-  return mat4Mult(
-    RotationMatrix(rotDegrees, [0, 0, 1, 0]),
-    mat4Mult(
-      ScaleMatrix(scale),
-      TranslationMatrix(location)
-    )
-  );
 };
 
 export const getArrowDirection = (side) => {
@@ -218,4 +243,4 @@ export const getArrowDirection = (side) => {
     default:
       return [1, 0, 0, 0];
   }
-}
+};

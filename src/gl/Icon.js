@@ -19,6 +19,7 @@ export default class Icon {
 
   clicked = false;
   onClick = () => {};
+  onRemove = () => {};
 
   constructor(
     index,
@@ -27,7 +28,8 @@ export default class Icon {
     transformMatrix,
     extents,
     colorMultiply = null,
-    onClick = () => {}
+    onClick = () => {},
+    onRemove = () => {}
   ) {
     this.index = index;
     this.geometry = QUAD.vertData;
@@ -40,6 +42,7 @@ export default class Icon {
     this.extents = extents;
     this.colorMultiply = colorMultiply;
     this.onClick = onClick;
+    this.onRemove = onRemove;
   }
 
   draw (gl, program) {

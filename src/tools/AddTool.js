@@ -1,7 +1,9 @@
+import { TOOL_INDICES } from '../utils/constants';
 import { TranslationMatrix } from '../utils/vectorMath';
 import DraggableIcon from '../gl/DraggableIcon';
 
 export default class AddTool {
+  id = TOOL_INDICES.AddTool;
   placingIcon = null;
   mouseDown = false;
 
@@ -14,6 +16,7 @@ export default class AddTool {
       1,
       TranslationMatrix([...event.worldMousePos]),
       [[-0.5, 0.5], [-0.458, 0.458]],
+      null,
       null,
       event.removeIcon,
       event.removeConnection

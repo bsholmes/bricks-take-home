@@ -1,5 +1,6 @@
 import Connection from '../gl/Connection';
 import Icon from '../gl/Icon';
+import { TOOL_INDICES } from '../utils/constants';
 import { getArrowTransformMatrix } from '../utils/utils';
 import {
   vec4Magnitude,
@@ -10,6 +11,7 @@ const DISTANCE_LIMIT = 0.5;
 const ARROW_SCALE = [0.1, 0.1, 0.1, 0];
 
 export default class ConnectTool {
+  id = TOOL_INDICES.ConnectTool;
   workingConnection = null;
   indicatorArrow = null;
 
@@ -52,6 +54,12 @@ export default class ConnectTool {
   }
 
   onMouseDown (event) {
+    if (event.connections && event.connections.length) {
+      for (let i = 0; i < event.connections.length; ++i) {
+        event.connections[i].onMouseDown(event);
+      }
+    }
+
     if (!this.workingConnection) {
       // add connection if we're close enough to an icon with an available side
       const {
@@ -73,6 +81,8 @@ export default class ConnectTool {
         event.removeConnection
       );
 
+      this.workingConnection.worldMousePos = event.worldMousePos;
+
       closestIcon.sideConnections[closestSideIndex] = this.workingConnection;
 
       event.addConnection(this.workingConnection);
@@ -85,8 +95,7 @@ export default class ConnectTool {
       } = this.getClosestIconAndSide(event.icons, event.worldMousePos);
 
       if (closestIcon && this.workingConnection.startIcon !== closestIcon) {
-        this.workingConnection.endIcon = closestIcon;
-        this.workingConnection.endSide = closestSideIndex;
+        this.workingConnection.setEnd(closestIcon, closestSideIndex);
 
         closestIcon.sideConnections[closestSideIndex] = this.workingConnection;
 
@@ -99,9 +108,20 @@ export default class ConnectTool {
   }
 
   onMouseUp (event) {
+    if (event.connections && event.connections.length) {
+      for (let i = 0; i < event.connections.length; ++i) {
+        event.connections[i].onMouseUp(event);
+      }
+    }
   }
 
   onMouseMove (event) {
+    if (event.connections && event.connections.length) {
+      for (let i = 0; i < event.connections.length; ++i) {
+        event.connections[i].onMouseMove(event);
+      }
+    }
+
     // show connector triangle on nearest icon, nearest side if we're close to it
     const {
       closestIcon,
@@ -111,9 +131,11 @@ export default class ConnectTool {
     if (closestIcon && (!this.workingConnection || this.workingConnection.startIcon !== closestIcon)) {
       if (!this.indicatorArrow) {
         let transform = getArrowTransformMatrix(
+          closestIcon,
           closestSideIndex,
           closestIcon.getSideMidpoints()[closestSideIndex],
-          ARROW_SCALE
+          ARROW_SCALE,
+          closestIcon.getSideMidpoints()[closestSideIndex]
         ); 
         this.indicatorArrow = new Icon(
           event.iconsCreated,
@@ -121,15 +143,19 @@ export default class ConnectTool {
           null,
           transform,
           [[-0.15, 0.15],[-0.15, 0.15]],
-          [1, 1, 1, 0.6]
+          [1, 1, 1, 0.6],
+          null,
+          event.removeIcon
         );
 
         event.addIcon(this.indicatorArrow);
       } else {
         this.indicatorArrow.transformMatrix = getArrowTransformMatrix(
+          closestIcon,
           closestSideIndex,
           closestIcon.getSideMidpoints()[closestSideIndex],
-          ARROW_SCALE
+          ARROW_SCALE,
+          closestIcon.getSideMidpoints()[closestSideIndex]
         ); 
       }
     } else {
@@ -141,9 +167,14 @@ export default class ConnectTool {
   }
 
   onToolChange() {
+    // cleanup connection and icon on tool change
     if (this.workingConnection) {
       this.workingConnection.onRemove(this.workingConnection.index);
       this.workingConnection = null;
+    }
+    if (this.indicatorArrow) {
+      this.indicatorArrow.onRemove(this.indicatorArrow.index);
+      this.indicatorArrow = null;
     }
   }
 }

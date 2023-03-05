@@ -9,16 +9,12 @@ import {
 
 import Icon from './Icon';
 
-
 const DELETE_ICON_OFFSET = [0.42, 0.36, 0];
 
 export default class DraggableIcon extends Icon {
-  clicked = false;
   dragging = false;
   clickOffset = [0, 0, 0];
   deleteIcon = null;
-
-  onDelete = (index) => {};
   onRemoveConnection = (index) => {};
 
   sideConnections = [
@@ -34,8 +30,9 @@ export default class DraggableIcon extends Icon {
     secondaryTextureIndex,
     transformMatrix,
     extents,
+    colorMultiply,
     onClick = () => {},
-    onDelete = (index) => {},
+    onRemove = (index) => {},
     onRemoveConnection = (index) => {}
   ) {
     super(
@@ -44,10 +41,11 @@ export default class DraggableIcon extends Icon {
       secondaryTextureIndex,
       transformMatrix,
       extents,
-      onClick
+      colorMultiply,
+      onClick,
+      onRemove
     );
 
-    this.onDelete = onDelete;
     this.onRemoveConnection = onRemoveConnection;
   }
 
@@ -107,7 +105,7 @@ export default class DraggableIcon extends Icon {
           [[-0.075, 0.075], [-0.075, 0.075]],
           null,
           () => {
-            this.onDelete(this.index);
+            this.onRemove(this.index);
 
             // remove connections
             for (let i = 0; i < this.sideConnections.length; ++i) {
@@ -156,9 +154,10 @@ export default class DraggableIcon extends Icon {
     // compare bounds to other bounds
     let overlap = [0, 0];
     let adjustDirection = null;
+    let ignoreIndices = [];
 
     for (let i = 0; i < nodes.length; ++i) {
-      if (nodes[i].index === this.index) {
+      if (nodes[i].index === this.index || ignoreIndices.some(idx => idx === i)) {
         continue;
       }
 
@@ -197,7 +196,7 @@ export default class DraggableIcon extends Icon {
           overlapY = otherBounds[2] - bounds[3];
         }
 
-        if (!adjustDirection) {
+        if (adjustDirection === null) {
           if (Math.abs(overlapX) < Math.abs(overlapY)) {
             if (overlapX < 0) {
               adjustDirection = 0;
@@ -211,10 +210,7 @@ export default class DraggableIcon extends Icon {
               adjustDirection = 3;
             }
           }
-          i = 0;
         }
-
-        console.log('adjustDirection: ' + adjustDirection);
 
         let adjust = [];
 
@@ -232,6 +228,11 @@ export default class DraggableIcon extends Icon {
 
         overlap[0] = adjust[0] - position[0];
         overlap[1] = adjust[1] - position[1];
+
+        // restart the loop, we may have new collisions with the new overlap offset
+        // but don't check the same node again
+        ignoreIndices.push(i);
+        i = -1; 
       }
     }
 

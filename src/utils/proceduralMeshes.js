@@ -1,6 +1,8 @@
 import {
   DEG_TO_RAD,
   vec4Add,
+  vec4Dot,
+  vec4Sub,
   vec4Scale
 } from './vectorMath';
 
@@ -181,9 +183,26 @@ export const LinePath = (
   startPos,
   startSide,
   endPos,
-  endSide
+  endSide,
+  startBounds,
+  endBounds
 ) => {
   const MIN_LINE_DIST = 0.2;
+  const SIDE_OFFSET_COEFF = 0.2;
+  const WIRE_INDEX = [
+    [0,  1,  2,  3],
+    [4,  5,  6,  7],
+    [8,  9,  10, 11],
+    [12, 13, 14, 15],
+  ];
+
+  // we need a unique wire index based on side combination
+  const wireIndex = WIRE_INDEX[startSide][endSide];
+
+  // small offest based on sides so wires don't overlap
+  const min_dist = MIN_LINE_DIST +
+  (MIN_LINE_DIST * SIDE_OFFSET_COEFF * wireIndex);
+
   let vertData = [];
 
   const xDist = endPos[0] - startPos[0];
@@ -200,6 +219,8 @@ export const LinePath = (
 
   const startArrowDir = getArrowDirection(startSide);
   const endArrowDir = getArrowDirection(endSide);
+
+  let axesSwapped = false;
 
   let longAxisIndex = absXDist > absYDist ? 0 : 1;
   let shortAxisIndex = absXDist > absYDist ? 1 : 0;
@@ -227,6 +248,71 @@ export const LinePath = (
     let tempDist = longDist;
     longDist = shortDist;
     shortDist = tempDist;
+
+    axesSwapped = true;
+  }
+
+  // get min distance to go around the icon
+  // do this if the start is in the same direction as end arrow direction
+  const aroundEnd = (
+    (Math.abs(vec4Dot(endArrowDir, longAxis)) > 0.5 ||
+    Math.abs(vec4Dot(endArrowDir, shortAxis)) > 0.5) && (
+      (endArrowDir[0] < 0 && vec4Sub(endPos, startPos)[0] > 0) ||
+      (endArrowDir[1] < 0 && vec4Sub(endPos, startPos)[1] > 0)
+    )
+  );
+
+  // draw the short axis last instead of first if arrows are on opposite sides of icons and 
+  // are pointing towards each other
+  const shortAxisLast = aroundEnd || (
+    Math.abs(vec4Dot(startArrowDir, longAxis)) > 0.5 &&
+    Math.abs(vec4Dot(endArrowDir, longAxis)) > 0.5 && (
+      (startArrowDir[0] > 0 && endArrowDir[0] < 0 && vec4Sub(endPos, startPos)[0] > 0) ||
+      (startArrowDir[0] < 0 && endArrowDir[0] > 0 && vec4Sub(endPos, startPos)[0] < 0) ||
+      (startArrowDir[1] > 0 && endArrowDir[1] < 0 && vec4Sub(endPos, startPos)[1] > 0) ||
+      (startArrowDir[1] < 0 && endArrowDir[1] > 0 && vec4Sub(endPos, startPos)[1] < 0)
+    )
+  );
+
+  const simplePath = vec4Dot(startArrowDir, vec4Scale(shortAxis, Math.sign(shortDist - min_dist))) < 0.5;
+
+  if (aroundEnd) {
+    let newDist = 0;
+    if (absXDist > absYDist) {
+      if (yDist > 0) {
+        newDist = Math.max(
+          yDist,
+          endBounds[3] - startPos[1] +
+          min_dist
+        );
+      } else {
+        newDist = Math.min(
+          yDist,
+          endBounds[2] - startPos[1] -
+          min_dist
+        );
+      }
+    } else {
+      if (xDist > 0) {
+        newDist = Math.max(
+          xDist,
+          endBounds[1] - startPos[1] +
+          min_dist
+        );
+      } else {
+        newDist = Math.min(
+          xDist,
+          endBounds[0] - startPos[1] -
+          min_dist
+        );
+      }
+    }
+
+    if (axesSwapped) {
+      longDist = newDist;
+    } else {
+      shortDist = newDist;
+    }
   }
 
   // generate right-angled path from start to end
@@ -236,46 +322,84 @@ export const LinePath = (
 
   let point = vec4Add(
     startPos,
-    vec4Scale(startArrowDir, -MIN_LINE_DIST)
+    vec4Scale(startArrowDir, -min_dist)
   );
   point[2] = startPos[2];
   vertData = [...vertData, ...point, 0.5, 0.5];
 
-  // second segment in the longer axis to end, half the distance
+  if (!simplePath || shortAxisLast) {
+    // second segment in the longer axis to end, half the distance
+    point = vec4Add(
+      vec4Scale(shortAxis, point[shortAxisIndex]),
+      vec4Scale(
+        longAxis,
+        point[longAxisIndex] +
+        ((longDist * 0.5) + (MIN_LINE_DIST * SIDE_OFFSET_COEFF * wireIndex) * Math.sign(longDist)) +
+        vec4Scale(startArrowDir, min_dist)[longAxisIndex]) // compensate for first-segment offset
+    );
+    point[2] = startPos[2];
+    vertData = [...vertData, ...point, 0.5, 0.5];
+  }
+
+  // do this as the second to last segment if arrows are in opposite directions and pointing outwards
+  if (!shortAxisLast) {
+    // third segment in the shorter axis, full length to where the last segment will be
+    point = vec4Add(
+      vec4Scale(longAxis, point[longAxisIndex]),
+        vec4Scale(
+          shortAxis,
+          endPos[shortAxisIndex] + endArrowDir[shortAxisIndex] * -min_dist
+        )
+    );
+    point[2] = startPos[2];
+    vertData = [...vertData, ...point, 0.5, 0.5];
+  }
+
+  // fourth segment, similar to second, the second half of the distance
   point = vec4Add(
     vec4Scale(shortAxis, point[shortAxisIndex]),
     vec4Scale(
       longAxis,
       point[longAxisIndex] +
-      longDist * 0.5 +
-      vec4Scale(startArrowDir, MIN_LINE_DIST)[longAxisIndex]) // compensate for first-segment offset
-  );
-  point[2] = startPos[2];
-  vertData = [...vertData, ...point, 0.5, 0.5];
-
-  // third segment in the shorter axis, full length to where the last segment will be
-  point = vec4Add(
-    vec4Scale(longAxis, point[longAxisIndex]),
-      vec4Scale(
-        shortAxis,
-        endPos[shortAxisIndex] + endArrowDir[shortAxisIndex] * -MIN_LINE_DIST
+      (
+        longDist * ((simplePath && !shortAxisLast) ? 1 : 0.5) -
+       (!simplePath || shortAxisLast ? ((MIN_LINE_DIST * SIDE_OFFSET_COEFF * wireIndex) * Math.sign(longDist)) : 0)
       )
+    )
   );
   point[2] = startPos[2];
   vertData = [...vertData, ...point, 0.5, 0.5];
 
-  // fourth segment, similar to second, the second half of the distance
-  point = vec4Add(
-    vec4Scale(shortAxis, point[shortAxisIndex]),
-    vec4Scale(longAxis, point[longAxisIndex] + longDist * 0.5)
-  );
-  point[2] = startPos[2];
-  vertData = [...vertData, ...point, 0.5, 0.5];
+  if (shortAxisLast) {
+    // shorter axis, full length to where the last segment will be
+    point = vec4Add(
+      vec4Scale(longAxis, point[longAxisIndex]),
+        vec4Scale(
+          shortAxis,
+          endPos[shortAxisIndex] + endArrowDir[shortAxisIndex] * -min_dist
+        )
+    );
+    point[2] = startPos[2];
+    vertData = [...vertData, ...point, 0.5, 0.5];
+
+    if (axesSwapped) {
+      // long axis, full length to where the last segment will be
+      point = vec4Add(
+        vec4Scale(shortAxis, point[shortAxisIndex]),
+          vec4Scale(
+            longAxis,
+            endPos[longAxisIndex] + endArrowDir[longAxisIndex] * -min_dist
+          )
+      );
+      point[2] = startPos[2];
+      vertData = [...vertData, ...point, 0.5, 0.5];
+    }
+  }
 
   // fifth segment, similar to first, aligned to end arrow in opposite direction
   vertData = [...vertData, ...endPos, 0.5, 0.5];
 
-  const indices = [0, 1, 2, 3, 4, 5];
+  const indices = Array.from(Array(vertData.length / 6).keys());// [0, 1, 2, 3, 4, 5];
 
   return {
     vertData,

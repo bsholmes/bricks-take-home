@@ -16,3 +16,9 @@ export const TEXTURE_SLOTS = (gl) => [
 ];
 
 export const FLOAT_BYTE_SIZE = 4;
+
+export const TOOL_INDICES = {
+  SelectTool: 0,
+  AddTool: 1,
+  ConnectTool: 2
+}

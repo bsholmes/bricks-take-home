@@ -4,7 +4,6 @@ import {
 } from 'react';
 import styled from 'styled-components';
 
-import Canvas from './Canvas';
 import {
   CreateAndLinkProgramWithShaders,
   CreateTexture,
@@ -15,10 +14,13 @@ import {
   ProjectionMatrix,
   ViewMatrix
 } from '../utils/vectorMath';
+import { TOOL_INDICES } from '../utils/constants';
+import Canvas from './Canvas';
 import Camera from '../gl/Camera';
 
 import unlitVertexShader from '../shaders/unlitVertexShader.glsl';
 import unlitFragmentShader from '../shaders/unlitFragmentShader.glsl';
+
 import CircuitIcon from '../static/circuit_icon.svg';
 import DeleteIcon from '../static/delete_icon.svg';
 import ConnectArrowIcon from '../static/connect_arrow_icon.svg';
@@ -43,7 +45,6 @@ const IconCanvas = ({
   const [iconsCreated, _setIconsCreated] = useState(0);
   const [connections, _setConnections] = useState([]);
   const [connectionsCreated, _setConnectionsCreated] = useState(0);
-  const [mousePos, _setMousePos] = useState([0, 0, 0, 0]);
 
   const iconsRef = useRef(icons);
   const setIcons = icons => {
@@ -69,12 +70,6 @@ const IconCanvas = ({
     _setConnectionsCreated(num);
   };
 
-  const mousePosRef = useRef(mousePos);
-  const setMousePos = pos => {
-    mousePosRef.current = pos;
-    _setMousePos(pos);
-  };
-
   const toolRef = useRef(tool);
   toolRef.current = tool;
 
@@ -85,6 +80,7 @@ const IconCanvas = ({
 
   const removeIcon = (index) => {
     const deleteIndex = iconsRef.current.findIndex(icon => icon.index === index);
+
     if (deleteIndex === 0) {
       setIcons(iconsRef.current.slice(1, iconsRef.current.length));
     } else {
@@ -135,14 +131,13 @@ const IconCanvas = ({
       Z_POS
     );
 
-    setMousePos(worldMousePos);
-
     event = {
       ...event,
 
       worldMousePos,
       icons: [...iconsRef.current],
       iconsCreated: iconsCreatedRef.current,
+      connections: [...connectionsRef.current],
       connectionsCreated: connectionsCreatedRef.current,
       camera: CAMERA,
       addIcon,
@@ -201,7 +196,7 @@ const IconCanvas = ({
     // draw connections
     if (connections && connections.length) {
       for (let i = 0; i < connections.length; ++i) {
-        connections[i].draw(gl, glProgram, mousePos);
+        connections[i].draw(gl, glProgram, tool.id === TOOL_INDICES.ConnectTool);
       }
     }
   };

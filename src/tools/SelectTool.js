@@ -1,4 +1,6 @@
+import { TOOL_INDICES } from '../utils/constants';
 export default class SelectTool {
+  id = TOOL_INDICES.SelectTool;
   selectedIcon = null;
   onMouseDown (event) {
     if (event.icons && event.icons.length) {
