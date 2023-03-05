@@ -262,23 +262,18 @@ export const LinePath = (
     )
   );
 
-  // draw the short axis last instead of first if arrows are on opposite sides of icons and 
-  // are pointing towards each other
-  const shortAxisLast = aroundEnd || (
-    Math.abs(vec4Dot(startArrowDir, longAxis)) > 0.5 &&
-    Math.abs(vec4Dot(endArrowDir, longAxis)) > 0.5 && (
-      (startArrowDir[0] > 0 && endArrowDir[0] < 0 && vec4Sub(endPos, startPos)[0] > 0) ||
-      (startArrowDir[0] < 0 && endArrowDir[0] > 0 && vec4Sub(endPos, startPos)[0] < 0) ||
-      (startArrowDir[1] > 0 && endArrowDir[1] < 0 && vec4Sub(endPos, startPos)[1] > 0) ||
-      (startArrowDir[1] < 0 && endArrowDir[1] > 0 && vec4Sub(endPos, startPos)[1] < 0)
-    )
+  // we can simplify the path by using one less segment
+  const simplePath = (
+    vec4Dot(startArrowDir, vec4Scale(shortAxis, Math.sign(shortDist - min_dist))) < 0.5 && 
+    vec4Dot(endArrowDir, vec4Scale(shortAxis, Math.sign(shortDist - min_dist))) < 0.5
   );
 
-  const simplePath = vec4Dot(startArrowDir, vec4Scale(shortAxis, Math.sign(shortDist - min_dist))) < 0.5;
-
+  // apply min distance to ensure path goes around bounds
+  // shouldn't always be swap axis if aroundEnd
   if (aroundEnd) {
     let newDist = 0;
     if (absXDist > absYDist) {
+      newDist = yDist;
       if (yDist > 0) {
         newDist = Math.max(
           yDist,
@@ -293,6 +288,7 @@ export const LinePath = (
         );
       }
     } else {
+      newDist = xDist;
       if (xDist > 0) {
         newDist = Math.max(
           xDist,
@@ -314,6 +310,21 @@ export const LinePath = (
       shortDist = newDist;
     }
   }
+
+  // draw the short axis last instead of first if arrows are on opposite sides of icons and 
+  // are pointing towards each other
+
+  // shouldn't always be true with aroundEnd
+  const arrowDot = vec4Dot(startArrowDir, endArrowDir);
+  const shortAxisLast = ((aroundEnd && (arrowDot > 0.5 && arrowDot < 1) || axesSwapped)) || (
+    Math.abs(vec4Dot(startArrowDir, longAxis)) > 0.5 &&
+    Math.abs(vec4Dot(endArrowDir, longAxis)) > 0.5 && (
+      (startArrowDir[0] > 0 && endArrowDir[0] < 0 && vec4Sub(endPos, startPos)[0] > 0) ||
+      (startArrowDir[0] < 0 && endArrowDir[0] > 0 && vec4Sub(endPos, startPos)[0] < 0) ||
+      (startArrowDir[1] > 0 && endArrowDir[1] < 0 && vec4Sub(endPos, startPos)[1] > 0) ||
+      (startArrowDir[1] < 0 && endArrowDir[1] > 0 && vec4Sub(endPos, startPos)[1] < 0)
+    )
+  );
 
   // generate right-angled path from start to end
 
@@ -363,7 +374,8 @@ export const LinePath = (
       point[longAxisIndex] +
       (
         longDist * ((simplePath && !shortAxisLast) ? 1 : 0.5) -
-       (!simplePath || shortAxisLast ? ((MIN_LINE_DIST * SIDE_OFFSET_COEFF * wireIndex) * Math.sign(longDist)) : 0)
+       (!simplePath || shortAxisLast ? ((MIN_LINE_DIST * SIDE_OFFSET_COEFF * wireIndex) * Math.sign(longDist)) : 0) +
+       ((simplePath || axesSwapped) ? endArrowDir[longAxisIndex] * -min_dist : 0)
       )
     )
   );
